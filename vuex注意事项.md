@@ -6,7 +6,7 @@ state 是唯一会根据组合时模块的别名来添加层级的，后面的 g
     通过 rootState，模块中的 getters 就可以引用别的模块中的 state 了，十分方便。    
     由于 getters 不区分模块，所以不同模块中的 getters 如果重名，Vuex 会报出 'duplicate getter key: [重复的getter名]' 错误    
 （3）mutations 与 getters 类似，不同模块的 mutation 均可以通过 store.commit 直接触发。    
-mutation 的回调函数中只接收唯一的参数——当前模块的 state。如果不同模块中有同名的 mutation，Vuex 不会报错，通过 store.commit 调用，会依次触发所有同名 mutation。
+mutation 的回调函数中只接收唯一的参数——当前模块的 state。如果不同模块中有同名的 mutation，Vuex 不会报错，通过 store.commit 调用，会依次触发所有同名 mutation。    
 （4）与 mutations 类似，不同模块的 actions 均可以通过 store.dispatch 直接触发。  
 
 action 的回调函数接收一个 context 上下文参数，context 包含：1. state、2. rootState、3. getters、4. mutations、5. actions 五个属性，为了简便可以在参数中解构。
