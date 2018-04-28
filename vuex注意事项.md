@@ -35,4 +35,4 @@ computed:
      }
    
 ```
-但是一般不在组件中直接修改从vuex计算出来的属性，修改store中的值，要通过dispatch => action，在action中commit => mutation这种方式，如果是同步的，可以直接commit => mutation，如果有异步，要先dispatch => action，再commit => mutation，因为mutation中放的都是同步的，action可以放异步的，直接通过 this.myState = 'ABC’这种方式修改，也是异步。异步不能确保修改某一个字段的先后顺序。
+但是一般不在组件中直接修改从vuex计算出来的属性，修改store中的值，要通过dispatch => action，在action中commit => mutation这种方式，如果是同步的，可以直接commit => mutation，如果有异步，要先dispatch => action，再commit => mutation，因为mutation中放的都是同步的，action可以放异步的，直接通过 this.myState = 'ABC’这种方式修改，也是异步。异步不能确保修改某一个状态的先后顺序。
