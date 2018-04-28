@@ -16,3 +16,23 @@ action 的回调函数接收一个 context 上下文参数，context 包含：1.
 同样的，当不同模块中有同名 action 时，通过 store.dispatch 调用，会依次触发所有同名 actions。
 
 最后有一点要注意的是，将 store 中的 state 绑定到 Vue 组件中的 computed 计算属性后，对 state 进行更改需要通过 mutation 或者 action，在 Vue 组件中直接进行赋值 (this.myState = 'ABC') 是不会生效的。
+
+除非在computed计算属性中设置get和set可以使 this.myState = 'ABC'生效，使用mapState的方式不可以：
+```
+computed: 
+      // mapState({
+      //   count: state => state.count
+      // })
+     {
+       count: {
+         get: function () {
+             return this.$store.state.a.count
+         },
+         set: function (newValue) {
+             this.$store.state.a.count = newValue
+         }
+     }
+     }
+   
+```
+但是一般不在组件中直接修改从vuex计算出来的属性，修改sotore
