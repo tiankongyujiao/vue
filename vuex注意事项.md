@@ -1,6 +1,6 @@
 #### 1.不带命名空间的的情况下，在 Vuex 模块化中的state,getters,mutations,actions
 state 是唯一会根据组合时模块的别名来添加层级的，后面的 getters、mutations 以及 actions 都是直接合并在 store 下。    
-（1）例如，访问模块 a 中的 state，要通过 store.state.a，访问根 store 上申明的 state，依然是通过 store.state.xxx 直接访问    
+（1）例如，访问模块 a 中的 state，要通过 store.state.a.xxx，访问根 store 上申明的 state，依然是通过 store.state.xxx 直接访问    
 （2）与 state 不同的是，不同模块的 getters 会直接合并在 store.getters 下；getters 的回调函数所接收的前两个参数，模块化后需要用到第三个参数——rootState。参数：
     1️⃣. state，模块中的 state 仅为模块自身中的 state；2️⃣. getters，等同于 store.getters；3️⃣. rootState，全局 state。 
     通过 rootState，模块中的 getters 就可以引用别的模块中的 state 了，十分方便。    
