@@ -39,14 +39,14 @@ url虽然不一样，但是导入的组件是一样的，这时候就用到了�
     component: register,
     children: [
         {
-          // 当 /user/:id/profile 匹配成功，
-          // UserProfile 会被渲染在 User 的 <router-view> 中
+          // 当 /register/:id/profile 匹配成功，
+          // registerProfile 会被渲染在 register 的 <router-view> 中
           path: 'profile',
           component: profile
         },
         {
-          // 当 /user/:id/posts 匹配成功
-          // UserPosts 会被渲染在 User 的 <router-view> 中
+          // 当 /register/:id/posts 匹配成功
+          // registerPosts 会被渲染在 register 的 <router-view> 中
           path: 'posts',
           component: posts
         }
