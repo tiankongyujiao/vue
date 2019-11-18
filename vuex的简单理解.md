@@ -163,3 +163,12 @@ export default {
   }
 }
 ```
+##### 注意点
+1. 在state中声明一个空对象，比如：
+```
+state: {
+    info: {}
+}
+```
+在通过异步请求给info对象赋值以后，比如把{name: 'zhangsan', age: 18}赋值给state.info，后续如果再往info对象中添加其他的属性，比如添加一个sex属性为‘female’，那么这个‘female’属性再次修改时不会动态体现到dom结构中，需要手动使用Vue.$set(state.info, 'sex', 'female')方式赋值。    
+上面的name和age可以动态更新到dom中。
