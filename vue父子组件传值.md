@@ -89,5 +89,5 @@ var vm = new Vue({
 ```
 使用:message.sync='msg'，然后在子组件里使用this.$emit('update:message', 456)，就可以改变父组件的值，父组件无需再写update:message方法
 ##### 3. 通过$listeners传递事件和$attrs传递属性
-`$attrs`：包含了父作用域中不作为prop被识别（且获取）的特性绑定（class和style除外）。当一个组件没有生命任何prop时，这里会包含所有父作用域的绑定（class和style除外），并且可以通过v-bind="$attrs"传入内部组件：在创建高级别的组件的时候非常有用。    
+`$attrs`：包含了父作用域中不作为prop被识别（且获取）的特性绑定（class和style除外）。当一个组件没有声明任何prop时，这里会包含所有父作用域的绑定（class和style除外），并且可以通过v-bind="$attrs"传入内部组件：在创建高级别的组件的时候非常有用。    
 `$listeners`：包含了父作用域中（不含.native修饰器的）v-on事件监听器。它可以通过v-on="$listeners"传入内部组件：在创建高级别的组件的时候非常有用。
