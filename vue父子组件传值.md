@@ -209,3 +209,5 @@ created() {
 这样，在每次click组件的点击事件中，就会把event.target传递到show中，并console出来。
 
 所以eventBus的使用还是非常便捷的，但是如果是中大型项目，通信比较复杂，还是建议大家直接使用vuex。
+##### 7. 使用vuex
+详情见 https://github.com/tiankongyujiao/vue
