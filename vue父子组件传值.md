@@ -91,3 +91,17 @@ var vm = new Vue({
 ##### 3. 通过$listeners传递事件和$attrs传递属性
 `$attrs`：包含了父作用域中不作为prop被识别（且获取）的特性绑定（class和style除外）。当一个组件没有声明任何prop时，这里会包含所有父作用域的绑定（class和style除外），并且可以通过v-bind="$attrs"传入内部组件：在创建高级别的组件的时候非常有用。    
 `$listeners`：包含了父作用域中（不含.native修饰器的）v-on事件监听器。它可以通过v-on="$listeners"传入内部组件：在创建高级别的组件的时候非常有用。
+##### 4. 使用vue2.6.0新增的 Vue.observable( object )
+作用：让一个对象可响应。Vue 内部会用它来处理 data 函数返回的对象。    
+返回的对象可以直接用于`渲染函数`和`计算属性`内(试了一下，不能直接写在模板中，如单文件组件的template中，会报错)，并且会在发生改变时触发相应的更新。也可以作为最小化的跨组件状态存储器，用于简单的场景：
+```
+const state = Vue.observable({ count: 0 })
+const Demo = {
+  render(h) {
+    return h('button', {
+      on: { click: () => { state.count++ }}
+    }, `count is: ${state.count}`)
+  }
+}
+// 或者用于计算属性中
+```
