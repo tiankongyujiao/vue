@@ -210,4 +210,15 @@ created() {
 
 所以eventBus的使用还是非常便捷的，但是如果是中大型项目，通信比较复杂，还是建议大家直接使用vuex。
 ##### 7. 使用vuex
-详情见 https://github.com/tiankongyujiao/vue
+详情见 
+https://github.com/tiankongyujiao/vue/blob/master/vuex%E7%9A%84%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3.md    
+https://github.com/tiankongyujiao/vue/blob/master/vuex%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9.md
+#### 8. $parents/$children/ref
+```
+// ref的使用
+<child ref="child"></child>
+
+在model中这样使用：
+this.$refs.child
+```
+$parents访问左右的父组件，$children访问所有的子组件，知道顺序可以使用数组下标访问某个子组件，可以访问组件的data或者methods方法。
