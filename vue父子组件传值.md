@@ -105,3 +105,69 @@ const Demo = {
 }
 // 或者用于计算属性中
 ```
+##### 5. 通过provider/inject
+简单的来说就是在父组件中通过provider来提供变量，然后在子组件中通过inject来注入变量。
+```
+// 父组件
+<template>
+  <div>
+    <childOne></childOne>
+  </div>
+</template>
+
+<script>
+  import childOne from '../components/child'
+  export default {
+    name: "Parent",
+    provide: {
+      test: "zjtest"
+    },
+    components:{
+      childOne
+    }
+  }
+</script>
+
+// 子组件
+<template>
+  <div>
+    {{demo}}
+    <childtwo></childtwo>
+  </div>
+</template>
+
+<script>
+  import childTwo from './ChildTwo'
+  export default {
+    name: "childOne",
+    inject: ['test'],
+    data() {
+      return {
+        demo: this.test
+      }
+    },
+    components: {
+      childTwo
+    }
+  }
+</script>
+
+<template>
+  <div>
+    {{demo}}
+  </div>
+</template>
+// 子组件的子组件
+<script>
+  export default {
+    name: "childTwo",
+    inject: ['test'],
+    data() {
+      return {
+        demo: this.test
+      }
+    }
+  }
+</script>
+```
+使用provider/inject时，不管父子关系层级有多深，只要父组件或者父组件的父组件...以此类推的组件定义了provider，都可以在当前组件中使用inject获得provider中提供的属性。
