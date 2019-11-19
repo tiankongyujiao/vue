@@ -171,3 +171,41 @@ const Demo = {
 </script>
 ```
 使用provider/inject时，不管父子关系层级有多深，只要父组件或者父组件的父组件...以此类推的组件定义了provider，都可以在当前组件中使用inject获得provider中提供的属性。
+##### 6. eventBus
+作用：主要是现实途径是在要相互通信的兄弟组件之中，都引入一个新的vue实例，然后通过分别调用这个实例的事件触发和监听来实现通信和参数传递。    
+使用方法：// 转自https://segmentfault.com/a/1190000013636153  
+比如，我们这里有三个组件，main.vue、click.vue、show.vue。click和show是父组件main下的兄弟组件，而且click是通过v-for在父组件中遍历在了多个列表项中。这里要实现，click组件中触发点击事件后，由show组件将点击的是哪个dom元素console出来。    
+首先，我们给click组件添加点击事件
+```
+<div class="click" @click.stop.prevent="doClick($event)"></div>  
+```
+想要在doClick()方法中，实现对show组件的通信，我们需要新建一个js文件，来创建出我们的eventBus，我们把它命名为bus.js
+```
+import Vue from 'vue';  
+export default new Vue(); 
+```
+这样我们就创建了一个新的vue实例。接下来我们在click组件和show组件中import它。
+```
+import Bus from 'common/js/bus.js';  
+```
+接下来，我们在doClick方法中，来触发一个事件：
+```
+methods: {  
+  addCart(event) {  
+    Bus.$emit('getTarget', event.target);   
+  }  
+}  
+```
+这里我们在click组件中每次点击，都会在bus中触发这个名为'getTarget'的事件，并将点击事件的event.target顺着事件传递出去。
+
+接着，我们要在show组件中的created()钩子中调用bus监听这个事件，并接收参数：
+```
+created() {  
+  Bus.$on('getTarget', target => {  
+    console.log(target);  
+  });  
+}  
+```
+这样，在每次click组件的点击事件中，就会把event.target传递到show中，并console出来。
+
+所以eventBus的使用还是非常便捷的，但是如果是中大型项目，通信比较复杂，还是建议大家直接使用vuex。
