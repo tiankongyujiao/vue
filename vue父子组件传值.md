@@ -47,7 +47,7 @@ export default {
 子组件通过props接收父组件的传值，通过$emit方法触发父组件事件改变传值（不能在子组件修改父组件的值），如果父组件传递给子组件的值是动态的（ajax异步请求获取来的），需要在子组件watch传值，然后赋值给子组件自身的data属性。
 
 ##### 2. sync方式
-使用sync实现数据的双向绑定，在vue是不允许双向绑定的，可以使用sync变相实现，例如：
+使用sync实现数据的双向绑定：在vue中是不允许双向绑定的，可以使用sync变相实现，例如：
 ```
 <div id="example-2">
 // 这里的 :message.sync='msg'相当于 v-bind:message.sync='msg' 相当于 v-bind:message="msg" v-on:update:message="msg = $event"
