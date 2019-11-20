@@ -213,7 +213,7 @@ created() {
 详情见 
 https://github.com/tiankongyujiao/vue/blob/master/vuex%E7%9A%84%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3.md    
 https://github.com/tiankongyujiao/vue/blob/master/vuex%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9.md
-#### 8. $parents/$children/ref
+#### 8. $parent/$children/$refs
 ```
 // ref的使用
 <child ref="child"></child>
@@ -221,4 +221,6 @@ https://github.com/tiankongyujiao/vue/blob/master/vuex%E6%B3%A8%E6%84%8F%E4%BA%8
 在model中这样使用：
 this.$refs.child
 ```
-$parents访问左右的父组件，$children访问所有的子组件，知道顺序可以使用数组下标访问某个子组件，可以访问组件的data或者methods方法。
+1. $parent访问组件的父组件，$children访问所有的子组件，知道顺序可以使用数组下标访问某个子组件，可以访问组件的data或者methods方法。    
+2. $children 并不保证顺序，也不是响应式的。如果你发现自己正在尝试使用 $children 来进行数据绑定，考虑使用一个数组配合 v-for 来生成子组件，并且使用 Array 作为真正的来源。    
+3. $refs 只会在组件渲染完成之后生效，并且它们不是响应式的。这仅作为一个用于直接操作子组件的“逃生舱”——你应该避免在模板或计算属性中访问 $refs。
