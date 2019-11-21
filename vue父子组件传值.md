@@ -241,11 +241,22 @@ this.$refs.child
 </current-user>
 ```
 然而上述代码不会正常工作，因为只有 <current-user> 组件可以访问到 user, 而我们提供的内容是在父级parent模板中渲染的。      
-为了让 user 在父级的插槽内容中可用，我们可以将 user 作为 <slot> 元素的一个特性绑定上去：
+为了让 user 在父级的插槽内容中可用，我们可以将 user 作为 <slot> 元素的一个特性绑定上去：    
 ```
+// <current-user> 组件
   <span>
     <slot v-bind:user="user">
       {{ user.lastName }}
     </slot>
   </span>
 ```
+绑定在 <slot> 元素上的特性被称为插槽 prop。现在在父级作用域中，我们可以给 v-slot 带一个值来定义我们提供的插槽 prop 的名字：
+```
+// parent
+<current-user>
+  <template v-slot:default="slotProps">
+    {{ slotProps.user.firstName }}
+  </template>
+</current-user>
+```
+在这个例子中，我们选择将包含所有插槽 prop 的对象命名为 slotProps，但你也可以使用任意你喜欢的名字。
