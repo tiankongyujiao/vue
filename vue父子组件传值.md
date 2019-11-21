@@ -224,3 +224,28 @@ this.$refs.child
 1. $parent访问组件的父组件，$children访问所有的子组件，知道顺序可以使用数组下标访问某个子组件，可以访问组件的data或者methods方法。    
 2. $children 并不保证顺序，也不是响应式的。如果你发现自己正在尝试使用 $children 来进行数据绑定，考虑使用一个数组配合 v-for 来生成子组件，并且使用 Array 作为真正的来源。    
 3. $refs 只会在组件渲染完成之后生效，并且它们不是响应式的。这仅作为一个用于直接操作子组件的“逃生舱”——你应该避免在模板或计算属性中访问 $refs。
+
+##### 9. 作用于插槽：
+在使用插槽slot的时候，有时让插槽内容能够访问子组件中才有的数据是很有用的，例如：
+```
+// <current-user> 组件
+<span>
+  <slot>{{ user.lastName }}</slot>
+</span>
+```
+然后我们在父组件中这样用：
+```
+// 模板名 parent 
+<current-user>
+  {{ user.firstName }}
+</current-user>
+```
+然而上述代码不会正常工作，因为只有 <current-user> 组件可以访问到 user, 而我们提供的内容是在父级parent模板中渲染的。      
+为了让 user 在父级的插槽内容中可用，我们可以将 user 作为 <slot> 元素的一个特性绑定上去：
+```
+  <span>
+    <slot v-bind:user="user">
+      {{ user.lastName }}
+    </slot>
+  </span>
+```
