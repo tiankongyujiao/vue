@@ -105,7 +105,7 @@ const Demo = {
 }
 // 或者用于计算属性中
 ```
-##### 5. 通过provider/inject
+##### 5. 通过provider/inject依赖注入（提供的属性非响应式）
 简单的来说就是在父组件中通过provider来提供变量，然后在子组件中通过inject来注入变量。
 ```
 // 父组件
@@ -213,7 +213,7 @@ created() {
 详情见 
 https://github.com/tiankongyujiao/vue/blob/master/vuex%E7%9A%84%E7%AE%80%E5%8D%95%E7%90%86%E8%A7%A3.md    
 https://github.com/tiankongyujiao/vue/blob/master/vuex%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9.md
-#### 8. $parents/$children/ref
+#### 8. $parent/$children/$refs
 ```
 // ref的使用
 <child ref="child"></child>
@@ -221,4 +221,42 @@ https://github.com/tiankongyujiao/vue/blob/master/vuex%E6%B3%A8%E6%84%8F%E4%BA%8
 在model中这样使用：
 this.$refs.child
 ```
-$parents访问左右的父组件，$children访问所有的子组件，知道顺序可以使用数组下标访问某个子组件，可以访问组件的data或者methods方法。
+1. $parent访问组件的父组件，$children访问所有的子组件，知道顺序可以使用数组下标访问某个子组件，可以访问组件的data或者methods方法。    
+2. $children 并不保证顺序，也不是响应式的。如果你发现自己正在尝试使用 $children 来进行数据绑定，考虑使用一个数组配合 v-for 来生成子组件，并且使用 Array 作为真正的来源。    
+3. $refs 只会在组件渲染完成之后生效，并且它们不是响应式的。这仅作为一个用于直接操作子组件的“逃生舱”——你应该避免在模板或计算属性中访问 $refs。
+
+##### 9. 作用于插槽：
+在使用插槽slot的时候，有时让插槽内容能够访问子组件中才有的数据是很有用的，例如：
+```
+// <current-user> 组件
+<span>
+  <slot>{{ user.lastName }}</slot>
+</span>
+```
+然后我们在父组件中这样用：
+```
+// 模板名 parent 
+<current-user>
+  {{ user.firstName }}
+</current-user>
+```
+然而上述代码不会正常工作，因为只有 <current-user> 组件可以访问到 user, 而我们提供的内容是在父级parent模板中渲染的。      
+为了让 user 在父级的插槽内容中可用，我们可以将 user 作为 <slot> 元素的一个特性绑定上去：    
+```
+// <current-user> 组件
+  <span>
+    <slot v-bind:user="user">
+      {{ user.lastName }}
+    </slot>
+  </span>
+```
+绑定在 <slot> 元素上的特性被称为插槽 prop。现在在父级作用域中，我们可以给 v-slot 带一个值来定义我们提供的插槽 prop 的名字：
+```
+// parent
+<current-user>
+  <template v-slot:default="slotProps">
+    {{ slotProps.user.firstName }}
+  </template>
+</current-user>
+```
+在这个例子中，我们选择将包含所有插槽 prop 的对象命名为 slotProps，但你也可以使用任意你喜欢的名字。
