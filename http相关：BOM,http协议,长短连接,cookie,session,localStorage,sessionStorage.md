@@ -13,7 +13,7 @@ screen：用户显示屏幕相关属性
 
 进入正题：浏览器怎么和服务器通信，就要用到http协议，http是基于TCP/IP（传输层）的应用层协议。   
  
-# HTTP协议简介
+## HTTP协议简介
 HTTP（HyperText Transport Protocol）是超文本传输协议的缩写，协议即一种规范，浏览器和服务器之间进行“沟通”的一种规范，HTTP协议采用了请求/响应模型。
 
 HTTP协议包含http协议的请求，和http协议的响应    
