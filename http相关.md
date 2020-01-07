@@ -1,5 +1,5 @@
 首先介绍BOM：    
-##### 什么是BOM #####：Browser Object Model，即##### 浏览器对象模型 #####。
+##### 什么是BOM ##### ：Browser Object Model，即 ##### 浏览器对象模型 ##### 。
 BOM有一个核心对象window，window对象包含了6大核心模块，分别是：    
 document对象：即文档对象
 
