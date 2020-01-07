@@ -11,7 +11,67 @@ screen：用户显示屏幕相关属性
 以上出自链接：https://www.jianshu.com/p/0c8b34111e95的部分内容
 
 
-进入正题：浏览器怎么和服务器通信，就要用到http协议，http是基于TCP/IP（传输层）的应用层协议。    
+进入正题：浏览器怎么和服务器通信，就要用到http协议，http是基于TCP/IP（传输层）的应用层协议。   
+ 
+### HTTP协议简介 ###
+HTTP（HyperText Transport Protocol）是超文本传输协议的缩写，协议即一种规范，浏览器和服务器之间进行“沟通”的一种规范，HTTP协议采用了请求/响应模型。
+
+HTTP协议包含http协议的请求，和http协议的响应    
+http请求包含：请求行（包含请求方法，URL，请求协议/版本），请求头，请求正文（请求体）
+http响应包含：状态行，响应头，响应正文
+
+客户端向服务器发送一个请求，请求头包含请求的方法、URL、协议版本、以及包含请求修饰符、客户信息和内容的类似于MIME的消息结构。服务器以一个状态行作为响应，响应的内容包括消息协议的版本，成功或者错误编码加上包含服务器信息、实体元信息以及可能的实体内容。
+
+##### 一次完整的http请求包含以下步骤 #####
+（1）对www.baidu.com这个网址进行DNS域名解析，得到对应的IP地址；        
+（2）根据这个IP，找到对应的服务器，发起TCP的三次握手；    
+（3）建立TCP连接后发起HTTP请求；    
+（4）服务器响应HTTP请求，浏览器得到html代码；    
+（5）浏览器解析html代码，并请求html代码中的资源（如js、css、图片等）（先得到html代码，才能去找这些资源）；    
+（6）浏览器对页面进行渲染呈现给用户；    
+（7）服务器关闭关闭TCP连接；     
+转自：https://www.cnblogs.com/WindSun/p/11489356.html 里面有详细介绍，关于域名解析等。
+
+#### 请求头和响应头介绍 ####
+##### Headers 通用信息头：####
+（1）Request URL：请求的地址    
+（2）Request Method：请求的方法类型    
+（3）Status Code：响应状态码    
+（4）Remote Address：表示远程服务器地址    
+##### 请求(客户端->服务端[request]) ：#####     
+（1）请求行：GET(请求的方式) /newcoder/hello.html(请求的目标资源) HTTP/1.1(请求采用的协议和版本号)     
+（2）Accept: */*(客户端能接收的资源类型)     
+（3）Accept-Language: en-us(客户端接收的语言类型)     
+（4）Connection: Keep-Alive(维护客户端和服务端的连接关系)     
+（5）Host: localhost:8080(连接的目标主机域名和端口号)     
+（6）Referer: http://localhost/links.asp(告诉服务器我来自于哪里)     
+（7）User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36 （用户代理：简称UA。内容包含发出请求的用户信息，使得服务器能够识别客户端使用的操作系统及版本、CPU类型、浏览器及版本、浏览器渲染引擎、浏览器语言、插件等。）     
+（8）Accept-Encoding: gzip, deflate(客户端能接收的压缩数据的类型) 
+（9）If-Modified-Since: Tue, 11 Jul 2000 18:23:51 GMT(缓存时间)  
+（10）Cookie(客户端暂存服务端的信息) 
+（11）Date: Tue, 11 Jul 2000 18:23:51 GMT(客户端请求服务端的时间)
+
+#### #响应(服务端->客户端[response]) #####
+（1）响应头：HTTP/1.1(响应采用的协议和版本号) 200(状态码) OK(描述信息)
+（2）Location: http://www.baidu.com(服务端需要客户端访问的页面路径) 
+（3）Server:apache tomcat(服务端的Web服务端名)
+（4）Content-Encoding: gzip(服务端能够发送压缩编码类型) 
+（5）Content-Length: 80(服务端发送的压缩数据的长度，在http1.1长连接里，如果Transfer-Encoding: chunked，则没有该头部，二选一) 
+（6）Content-Language: zh-cn(服务端发送的语言类型) 
+（7）Content-Type: text/html; charset=GB2312(服务端发送的类型及采用的编码方式)
+（8）Last-Modified: Tue, 11 Jul 2000 18:23:51 GMT(服务端对该资源最后修改的时间)
+（9）Refresh: 1;url=http://www.it315.org(服务端要求客户端1秒钟后，刷新，然后访问指定的页面路径)
+（10）Content-Disposition: attachment; filename=aaa.zip(服务端要求客户端以下载文件的方式打开该文件)
+（11）Transfer-Encoding: chunked(分块传递数据到客户端，如果有这个头部，则没有content-type头）  
+（12）Set-Cookie: SS=Q0=5Lb_nQ; path=/search(服务端发送到客户端的暂存数据，可以设置为httponly，这样浏览器document.cookie取不到，避免篡改)
+（13）Expires: -1//3种(服务端禁止客户端缓存页面数据)
+（14）Cache-Control: no-cache(服务端禁止客户端缓存页面数据)  
+（15）Pragma: no-cache(服务端禁止客户端缓存页面数据)   
+（16）Connection: close(1.0)/(1.1)Keep-Alive(维护客户端和服务端的连接关系)  
+（17）Date: Tue, 11 Jul 2000 18:23:51 GMT(服务端响应客户端的时间)
+在服务器响应客户端的时候，带上Access-Control-Allow-Origin头信息，解决跨域的一种方法    
+
+原文链接：https://blog.csdn.net/weixin_37861326/article/details/82216068
 
 ### HTTP协议是无状态的 ###
 HTTP协议是无状态的，指的是协议对于事务处理没有记忆能力，服务器不知道客户端是什么状态。也就是说，打开一个服务器上的网页和上一次打开这个服务器上的网页    
