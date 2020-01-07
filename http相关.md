@@ -47,7 +47,7 @@ cookie又有httponly类型的cookie，一般由服务端直接设置，并设置
 
 后端session没用过，也不知道怎么使用，不做介绍。
 
-cookie是http4里面的，cookie有局限性：    
+#### cookie是http4里面的，cookie有局限性： ####   
 （1）每个域名最多只能有20个cookie；    
 （2）cookie的长度不能超过4kb；    
 （3）不安全：如果cookie被人拦掉了，那个人就可以获取到所有session信息。加密的话也不起什么作用，有些状态不可能保存在客户端；    
@@ -55,12 +55,12 @@ cookie是http4里面的，cookie有局限性：
 （5）但是cookie也是不可或缺的，cookie的作用是与服务器进行交互，作为http规范的一部分而存在的，而web Storage仅仅是为了在本地“存储”数据而生；    
 sessionStorage、localStorage、cookie都是在浏览器端存储的数据，其中sessionStorage的概念很特别，引入了一个“浏览器窗口”的概念，sessionStorage是在同源的同窗口中，始终存在的数据，也就是说只要这个浏览器窗口没有关闭，即使刷新页面或进入同源另一个页面，数据仍然存在，关闭窗口后，sessionStorage就会被销毁，同时“独立”打开的不同窗口，即使是同一页面，sessionStorage对象也是不同的。
 
-http5有了webStorage，包含localStorage和sessionStorage：    
+#### http5有了webStorage，包含localStorage和sessionStorage：####    
 （1）localStorage和sessionStorage仅用于浏览器端存储，不参与服务器端的通信；    
 （2）webStorage的存储大小都是5M；    
 （3）sessionStorage不在不同的浏览器窗口中共享，localStorage在所有同源窗口中都是共享的，cookie也是在所有同源窗口中都是共享的；
 
-sessionStorage、localStorage和cookie的区别
+#### sessionStorage、localStorage和cookie的区别 ####
 1）相同点是都是保存在浏览器端、且同源的；    
 2）cookie数据始终在同源的http请求中携带（即使不需要），即cookie在浏览器和服务器间来回传递，而sessionStorage和localStorage不会自动把数据发送给服务器，仅在本地保存。cookie数据还有路径（path）的概念，可以限制cookie只属于某个路径下；    
 3）存储大小限制也不同，cookie数据不能超过4K，同时因为每次http请求都会携带cookie、所以cookie只适合保存很小的数据，如会话标识。sessionStorage和localStorage虽然也有存储大小的限制，但比cookie大得多，可以达到5M或更大；    
@@ -69,12 +69,12 @@ sessionStorage、localStorage和cookie的区别
 6）web Storage支持事件通知机制，可以将数据更新的通知发送给监听者；    
 7）web Storage的api接口使用更方便。
 
-### 本地存储和服务端存储 ###
+#### 本地存储和服务端存储 ####
 1）数据既可以在浏览器本地存储，也可以在服务器端存储；    
 2）浏览器可以保存一些数据，需要的时候直接从本地存取，sessionStorage、localStorage和cookie都是由浏览器存储在本地的数据；    
 3）服务器端也可以保存所有用户的所有数据，但需要的时候浏览器要向服务器请求数据；    
 4）服务器端可以保存用户的持久数据，如数据库和云存储将用户的大量数据保存在服务器端 ，服务器端也可以保存用户的临时会话数据，服务器端的session机制，如jsp的session对象，数据保存在服务器上；    
 5）服务器和浏览器之间仅需传递session id即可，服务器根据session id找到对应用户的session对象，会话数据仅在一段时间内有效，这个时间就是server端设置的session有效期；    
 6）服务器端保存所有的用户的数据，所以服务器端的开销较大，而浏览器端保存则把不同用户需要的数据分别保存在用户各自的浏览器中，浏览器端一般只用来存储小数据，而非服务可以存储大数据或小数据服务器存储数据安全一些，浏览器只适合存储一般数据
-————————————————
+
 原文链接：https://blog.csdn.net/weixin_42614080/article/details/90706499
