@@ -100,7 +100,7 @@ cookie存储在客户端，如果不设置过期时间，生命期为浏览器�
 session存储在服务端，session的存在依赖于cookie。  
 
 token的使用是为了减轻服务器端的压力：Token是在客户端频繁向服务端请求数据，服务端频繁的去数据库查询用户名和密码并进行对比，判断用户名和密码正确与否，并作出相应提示，在这样的背景下，Token便应运而生。    
-session需要保存在数据库中，每次根据cookie的sessionID去数据库中查找session数据，然后进行用户信息查询，查询到，就会将查询到的用户信息返回，从而实现状态保持。而服务端并不保存token，减少了请求书，减少服务端的压力。
+session需要保存在数据库中，每次根据cookie的sessionID去数据库中查找session数据，然后进行用户信息查询，查询到，就会将查询到的用户信息返回，从而实现状态保持。而服务端并不保存token，减少了请求数，减少服务端的压力。
 
 cookie又有httponly类型的cookie，一般由服务端直接设置，并设置httponly属性，这样的cookie在浏览器端使用document.cookie获取不到，避免了篡改cookie，不管是httponly类型的cookie，还是document.cookie设置的cookie，浏览器像服务器发送请求时都会通过Request Header的Cookie字段带给服务端（携带请求头Cookie是浏览器自己完成的，不需要前端干预）。
 
