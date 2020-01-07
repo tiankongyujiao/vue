@@ -95,12 +95,16 @@ HTTP协议是基于请求/响应模式的（HTTP请求和HTTP响应，都是通�
 ### cookie，session，localStorage，sessionStorage ###
 由于http的连接是无状态的特性，所以有了以上四种存储数据的方式。
 
-cookie存储在客户端，如果不设置过期时间，生命期为浏览器会话期间，关闭浏览器窗口（这种为会话cookie，会话cookie一般不存储在硬盘而是保存在内存里），如果设置过期时间，关闭后再打开浏览器这些cookie仍然有效直到超过设定的过期时间（cookie保存到硬盘上）。    
-session存储在服务端，session的存在在某种程度上依赖于cookie（个人理解这种说法不完全正确，因为在使用session的客户端存储可以使用cookie，也可以不使用cookie，比如可以使用token字段，使用cookie的时候可以这么说）。
+cookie存储在客户端，如果不设置过期时间，生命期为浏览器会话期间，关闭浏览器窗口（这种为会话cookie，会话cookie一般不存储在硬盘而是保存在内存里），如果设置过期时间，关闭后再打开浏览器这些cookie仍然有效直到超过设定的过期时间（cookie保存到硬盘上）。
+
+session存储在服务端，session的存在依赖于cookie。  
+
+token的使用是为了减轻服务器端的压力：Token是在客户端频繁向服务端请求数据，服务端频繁的去数据库查询用户名和密码并进行对比，判断用户名和密码正确与否，并作出相应提示，在这样的背景下，Token便应运而生。    
+session需要保存在数据库中，每次根据cookie的sessionID去数据库中查找session数据，然后进行用户信息查询，查询到，就会将查询到的用户信息返回，从而实现状态保持。而服务端并不保存token，减少了请求书，减少服务端的压力。
 
 cookie又有httponly类型的cookie，一般由服务端直接设置，并设置httponly属性，这样的cookie在浏览器端使用document.cookie获取不到，避免了篡改cookie，不管是httponly类型的cookie，还是document.cookie设置的cookie，浏览器像服务器发送请求时都会通过Request Header的Cookie字段带给服务端（携带请求头Cookie是浏览器自己完成的，不需要前端干预）。
 
-后端session没用过，也不知道怎么使用，不做介绍。
+
 
 #### cookie是http4里面的，cookie有局限性： ####   
 （1）每个域名最多只能有20个cookie；    
