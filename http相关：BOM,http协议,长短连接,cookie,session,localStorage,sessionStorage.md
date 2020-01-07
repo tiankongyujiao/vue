@@ -124,6 +124,8 @@ sessionStorage、localStorage、cookie都是在浏览器端存储的数据，其
 6）web Storage支持事件通知机制，可以将数据更新的通知发送给监听者；    
 7）web Storage的api接口使用更方便。
 
+注意：sessionStorage同源窗口，不同标签页不共享，这种描述不确切，这要取决于浏览器标签的打开方式：如果是右键带有sessionStorage的标签打开的一个新的标签，则sessionStorage共享，或者从一个已经存在sessionStorage的标签点击链接进入的新标签共享之前标签的sessionStorage。换句话说，和包含sessionStorage标签页相关的标签页（即通过包含sessionStorage的标签页打开的标签页）共享sessionStorage。
+
 #### 本地存储和服务端存储 ####
 1）数据既可以在浏览器本地存储，也可以在服务器端存储；    
 2）浏览器可以保存一些数据，需要的时候直接从本地存取，sessionStorage、localStorage和cookie都是由浏览器存储在本地的数据；    
