@@ -39,4 +39,7 @@ HTTP协议是基于请求/响应模式的（HTTP请求和HTTP响应，都是通�
 
 ### cookie，session，localStorage，sessionStorage ###
 由于http的连接是无状态的特性，所以有了以上四种存储数据的方式。
-是的
+
+cookie存储在客户端浏览器，session存储在服务端，session的存在在某种程度上依赖于cookie（个人理解这种说法不完全正确，因为在使用session的客户端存储可以使用cookie，也可以不使用cookie，比如可以使用token字段，使用cookie的时候可以在这说）。
+
+cookie又有httponly类型的cookie，一般由服务端直接设置，并设置httponly属性，这样的cookie在浏览器端使用document.cookie获取不到，避免了篡改cookie，不管是httponly类型的cookie，还是document.cookie设置的cookie，浏览器像服务器发送请求时都会通过Request Header的Cookie字段带给服务端。
