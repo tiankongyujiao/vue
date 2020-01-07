@@ -2,17 +2,12 @@
 #### 什么是BOM #### 
 Browser Object Model，即 浏览器对象模型 。
 BOM有一个核心对象window，window对象包含了6大核心模块，分别是：    
-document对象：即文档对象
-
-frames：即HTML自框架
-
-history：即页面的历史记录
-
-location：即当前页面的地址
-
-navigator：包含浏览器相关信息
-
-screen：用户显示屏幕相关属性
+document对象：即文档对象    
+frames：即HTML自框架    
+history：即页面的历史记录    
+location：即当前页面的地址    
+navigator：包含浏览器相关信息    
+screen：用户显示屏幕相关属性    
 以上出自链接：https://www.jianshu.com/p/0c8b34111e95的部分内容
 
 
