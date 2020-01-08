@@ -27,7 +27,7 @@
 父组件 updated()
 
 
-消亡过程：
+// 消亡过程：
 父组件 beforeDestroy()： beforeDestroy钩子函数在实例销毁之前调用。在这一步，实例仍然完全可用。
         ↓
 子组件beforeDestory()
