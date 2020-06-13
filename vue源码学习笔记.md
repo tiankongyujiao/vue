@@ -18,6 +18,7 @@ new Vue方法里执行了_init()方法，这个_init()方法是我们上面提�
 + 做了一堆的初始化的工作，比如定义_uid，合并options（把传入的options最终merge到$options上，所以可以通过this.$options.el访问到我们代码中定义的el，通过this.$options.data访问到我们代码中定义的data），
 + 接下来定义了一堆初始化的函数，比如initLifecycle(vm)，initEvents(vm)，initRender(vm)，callHook(vm, 'beforeCreate')，initInjections(vm)，initState(vm)，initProvide(vm)，callHook(vm, 'created')，
 + 最后判断我们的vm.$options.el是不是存在，如果存在会调用$mount方法做挂载。
++ 其中initState(vm)挂载了data,props,methods...
 
 
 
