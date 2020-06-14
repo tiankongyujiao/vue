@@ -27,6 +27,8 @@ new Vue方法里执行了_init()方法，这个_init()方法是当前文件initM
 + mountComponent(): 首先缓存el（vm.$el = el）,然后判断是否存在render函数（template,el编译成的render函数或者手写的render函数），如果不存在就生成一个空的vnode赋值给render函数，并如果在开发环境根据情况报一系列的警告。
 + 然后再mountComponent()最后调用updateComponent()
 + updateComponent(): 这个方法的执行是在new Watcher（渲染watcher）中调用（this.getter,这个getter就是我们传入new Watcher中的updateComponent()）,这样就执行了updateComponent()，也就执行了*vm._update(vm._render(),hydrating)*,vm._update和vm._render函数是我们挂载到真实DOM要用到的两个函数。vm._render是生成一个vnode，然后调用vm._update把vnode传入，这个后面会重点分析。
-
+##### vm._render
++ 定义在'src/core/instance/render.js'中，定义在renderMixin()方法中的，renderMixin()方法在'src/core/instance/index.js'中调用一些列mixin方法中的其中一个，renderMixin除了在原型上挂载了_render方法，还挂载了$nextTick方法。
++ 
 
 
