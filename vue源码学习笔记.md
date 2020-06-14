@@ -21,7 +21,12 @@ new Vue方法里执行了_init()方法，这个_init()方法是当前文件initM
 + 最后判断我们的vm.$options.el是不是存在，如果存在会调用$mount方法做挂载。
 + 其中initState(vm)挂载了data,props,methods...
 + data会被代理到_data上(通过这行代码实现data = vm._data = typeof data === 'function' ? getData(data, vm) : data || {})，我们访问this.message时实际访问的是this._data.message(通过proxy实现)，但我们在实际开发中不使用_data,因为下划线开头的默认都是私有属性。
-
+##### Vue实例挂载的实现 $mount
++ 上面我们提到过在入口文件'src/platforms/web/entry-runtime-with-compiler.js'和'src/platforms/web/runtime/index.js'（统一$mount）文件中都定义了$mount，入口文件定义的是跟编译相关的$mount，在编译相关的$mount方法里最终会调用统一的$mount方法，编译相关的$mount会在调用统一的$mount前把template编译成render函数，然后调用统一的$mount(这个方法只认render函数)。
++ 在统一的$mount()（'src/platforms/web/runtime/index.js'）中，会调用*mountComponent*方法，mountComponent方法定义在'src/core/instance/lifecycle.js'中。
++ mountComponent(): 首先缓存el（vm.$el = el）,然后判断是否存在render函数（template,el编译成的render函数或者手写的render函数），如果不存在就生成一个空的vnode赋值给render函数，并如果在开发环境根据情况报一系列的警告。
++ 然后再mountComponent()最后调用updateComponent()
++ updateComponent(): 这个方法的执行是在new Watcher（渲染watcher）中调用（this.getter,这个getter就是我们传入new Watcher中的updateComponent()）,这样就执行了updateComponent()，也就执行了*vm._update(vm._render(),hydrating)*,vm._update和vm._render函数是我们挂载到真实DOM要用到的两个函数。vm._render是生成一个vnode，然后调用vm._update把vnode传入，这个后面会重点分析。
 
 
 
