@@ -20,6 +20,8 @@ new Vue方法里执行了_init()方法，这个_init()方法是我们上面提�
 + 接下来定义了一堆初始化的函数，比如initLifecycle(vm)，initEvents(vm)，initRender(vm)，callHook(vm, 'beforeCreate')，initInjections(vm)，initState(vm)，initProvide(vm)，callHook(vm, 'created')，
 + 最后判断我们的vm.$options.el是不是存在，如果存在会调用$mount方法做挂载。
 + 其中initState(vm)挂载了data,props,methods...
++ data会被代理到_data上(通过这行代码实现data = vm._data = typeof data === 'function' ? getData(data, vm) : data || {})，我们访问this.message时实际访问的是this._data.message，但我们在实际开发中不适用_data,因为下划线开头的默认都是私有属性。
+
 
 
 
