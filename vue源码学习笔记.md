@@ -29,6 +29,9 @@ new Vue方法里执行了_init()方法，这个_init()方法是当前文件initM
 + updateComponent(): 这个方法的执行是在new Watcher（渲染watcher）中调用（this.getter,这个getter就是我们传入new Watcher中的updateComponent()）,这样就执行了updateComponent()，也就执行了*vm._update(vm._render(),hydrating)*,vm._update和vm._render函数是我们挂载到真实DOM要用到的两个函数。vm._render是生成一个vnode，然后调用vm._update把vnode传入，这个后面会重点分析。
 ##### vm._render
 + 定义在'src/core/instance/render.js'中，定义在renderMixin()方法中的，renderMixin()方法在'src/core/instance/index.js'中调用一些列mixin方法中的其中一个，renderMixin除了在原型上挂载了_render方法，还挂载了$nextTick方法。
-+ 
++ _render最终返回的是一个vnode。
++ _render函数内首先vm.$options.render赋值给render(const { render, _parentVnode } = vm.$options)，然后调用render，这个render可以是手写的render，也可以是通过编译生成的函数
++ vnode = render.call(vm._renderProxy, vm.$createElement): vm._renderProxy在生产环境其实就是vm，在开发环境就是一个proxy对象，vm.$createElement是在initRender函数中定义，initRender函数是在_init函数中初始化一堆函数中的其中一个。vm.$createElement就是我们手写render函数时传入的那个createElement或者是h形参，形参可以自定义为任意变量，都代表了vm.$createElement。
+##### 
 
 
