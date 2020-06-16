@@ -39,6 +39,6 @@ new Vue方法里执行了_init()方法，这个_init()方法是当前文件initM
 + Virtual DOM 除了它的数据结构的定义，映射到真实的DOM实际上要经历VNode的create,diff,patch等过程。VNode的create是我们之前提到的，vm.$createElement方法创建的，下面分析这个方法。
 ##### createElement
 + createElement方法是在'src/core/vdom/create-element.js'中定义的，在这个方法中对参数进行了处理，就是如果没有传入data的情况，把后面的参数分别往前移动一个，处理完了以后调用了_createElement函数。
-+ _createElement：
++ _createElement：真正创建VNode的函数。 
 
 
