@@ -32,6 +32,13 @@ new Vue方法里执行了_init()方法，这个_init()方法是当前文件initM
 + _render最终返回的是一个vnode。
 + _render函数内首先vm.$options.render赋值给render(const { render, _parentVnode } = vm.$options)，然后调用render，这个render可以是手写的render，也可以是通过编译生成的函数
 + vnode = render.call(vm._renderProxy, vm.$createElement): vm._renderProxy在生产环境其实就是vm，在开发环境就是一个proxy对象，vm.$createElement是在initRender函数中定义，initRender函数是在_init函数中初始化一堆函数中的其中一个。vm.$createElement就是我们手写render函数时传入的那个createElement或者是h形参，形参可以自定义为任意变量，都代表了vm.$createElement。
-##### 
+##### 虚拟DOM
++ Virtual DOM 就是用一个原生的 JS 对象去描述一个 DOM 节点，所以它比创建一个 DOM 的代价要小很多。
++ Virtual DOM 是对真实DOM的一种抽象描述，它的核心定义包括标签名，数据，子节点，键值等。
++ VNode 只是用来映射到真实DOM的渲染，不需要包含操作DOM的方法，因此它非常轻量和简单。
++ Virtual DOM 除了它的数据结构的定义，映射到真实的DOM实际上要经历VNode的create,diff,patch等过程。VNode的create是我们之前提到的，vm.$createElement方法创建的，下面分析这个方法。
+##### createElement
++ createElement方法是在'src/core/vdom/create-element.js'中定义的，在这个方法中对参数进行了处理，就是如果没有传入data的情况，把后面的参数分别往前移动一个，处理完了以后调用了_createElement函数。
++ _createElement：
 
 
