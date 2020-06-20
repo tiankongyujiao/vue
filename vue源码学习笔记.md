@@ -41,5 +41,6 @@ new Vue方法里执行了_init()方法，这个_init()方法是当前文件initM
 + createElement方法是在'src/core/vdom/create-element.js'中定义的，在这个方法中对参数进行了处理，就是如果没有传入data的情况，把后面的参数分别往前移动一个，处理完了以后调用了_createElement函数。
 + _createElement：真正创建VNode的函数。 
 + _createElement中最主要的两个方法normalizeChildren和simpleNormalizeChildren方法，其中simpleNormalizeChildren是经过编译生成的render使用的，normalizeChildren是手写render使用的。
-
+### Vue.prototype._update
+在updateComponent函数中执行的 **vm._update(vm._render(), hydrating)**，vm._render()执行后得到的是vnode，返回后传给vm._update方法把vnode渲染成真实的DOM
 
