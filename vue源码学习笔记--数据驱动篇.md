@@ -1,4 +1,4 @@
-**vue源码学习笔记**
+**vue源码学习笔记--数据驱动篇**
 ##### 构建
 + vue通过rollup构建
 + 我们平时用的vue单文件结合webpack使用时一般用的是Vue Runtime Only版本，而不是Runtime + Compiler版本，单文件组件里能写template模板，是因为使用了vue-loader，在编译阶段就把浏览器不认识的vue编译成了JavaScript，把template模板已经编译成了render函数，如果不使用webpack模式的vue，没有vue-loader做预编译，则需要使用Runtime + Compiler版本。
@@ -43,5 +43,5 @@ new Vue方法里执行了_init()方法，这个_init()方法是当前文件initM
 + _createElement中最主要的两个方法normalizeChildren和simpleNormalizeChildren方法，其中simpleNormalizeChildren是经过编译生成的render使用的，normalizeChildren是手写render使用的。
 ### Vue.prototype._update
 在updateComponent函数中执行的 **vm._update(vm._render(), hydrating)**，vm._render()执行后得到的是vnode，返回后传给vm._update方法把vnode渲染成真实的DOM。
-+ _update 的核心就是调用 vm.__patch__ 方法，这个方法在不同的平台（web和weex）定义是不一样的，在web中是定义在‘src/platforms/web/runtime/index.js’中。
++ _update 的核心就是调用 vm.__patch__方法，这个方法在不同的平台（web和weex）定义是不一样的，在web中是定义在‘src/platforms/web/runtime/index.js’中。
 
