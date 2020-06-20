@@ -13,7 +13,7 @@
 + initMixin(Vue)的定义是在'src/core/instance/init.js'中, initMixin实际上是往Vue的原型链prototype上挂了一个_init方法。
 + 每个mixin都是往原型上汇入定义的一些原型链的方法。
 ### 数据驱动
-数据驱动是指视图由数据驱动生成，我们对视图的修改不会直接操作DOM，而是通过直接修改数据，相比于传统的使用jquery或者原生js操作DOM大大简化了代码量，特别是当交互复杂的时候，之关系数据的修改会让代码逻辑变得非常清晰，因为DOM变成了数据的映射，我们所有的逻辑都是对数据的修改，而不触碰DOM，这样的代码非常利于维护。
+数据驱动是指视图由数据驱动生成，我们对视图的修改不会直接操作DOM，而是通过直接修改数据，相比于传统的使用jquery或者原生js操作DOM大大简化了代码量，特别是当交互复杂的时候，只关心数据的修改会让代码逻辑变得非常清晰，因为DOM变成了数据的映射，我们所有的逻辑都是对数据的修改，而不触碰DOM，这样的代码非常利于维护。
 ##### new Vue()
 new Vue方法里执行了_init()方法，这个_init()方法是当前文件initMixin(Vue)方法中定义的，initMixin(Vue)这个方法又是在'src/core/instance/init.js'中定义，然后我们来看_init这个方法：
 + _init(options)做了一堆的初始化工作，比如定义_uid，合并options（把传入的options最终merge到$options上，所以可以通过this.$options.el访问到我们代码中定义的el，通过this.$options.data访问到我们代码中定义的data），
