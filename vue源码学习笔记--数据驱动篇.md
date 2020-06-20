@@ -44,4 +44,5 @@ new Vue方法里执行了_init()方法，这个_init()方法是当前文件initM
 ### Vue.prototype._update
 在updateComponent函数中执行的 **vm._update(vm._render(), hydrating)**，vm._render()执行后得到的是vnode，返回后传给vm._update方法把vnode渲染成真实的DOM。
 + _update 的核心就是调用 vm.__patch__方法，这个方法在不同的平台（web和weex）定义是不一样的，在web中是定义在‘src/platforms/web/runtime/index.js’中。
++ 
 
