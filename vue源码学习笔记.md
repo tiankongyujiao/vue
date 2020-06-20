@@ -5,7 +5,7 @@
 ##### vue的Runtime + Compiler版本的入口文件在：src/platforms/web/entry-runtime-with-compiler.js
 + 'src/platforms/web/entry-runtime-with-compiler.js': 导出了Vue，Vue是import（'src/platforms/web/runtime/index.js'）而来，随后在Vue上面有挂载了$mount方法（这个$mount方法是跟带编译器相关的方法)。
 + 'src/platforms/web/runtime/index.js': 导出了Vue，这里的Vue也是import（'src/core/index.js'）而来，然后定义了一些全局的配置以及__patch__方法，以及$mount方法（这个$mount方法是统一方法)，
-+ 'src/core/index.js'：也是导出了Vue，这里的Vue又是import（'src/core/instance/index.js'）而来，然后通过initGlobalAPI方法初始化了一些全局的api，initGlobalAPI方法定义在'src/core/global-api/index.js'中，initGlobalAPI中定义了全局的config，以及set，delete，nextTick全局静态方法，在最后还一定initUse(Vue)方法，initMixin(Vue)，initExtend(Vue)，initAssetRegisters(Vue)。
++ 'src/core/index.js'：也是导出了Vue，这里的Vue又是import（'src/core/instance/index.js'）而来，然后通过initGlobalAPI方法初始化了一些全局的api，initGlobalAPI方法定义在'src/core/global-api/index.js'中，initGlobalAPI中定义了全局的config，以及set，delete，nextTick全局静态方法，在最后还定义了initUse(Vue)，initMixin(Vue)，initExtend(Vue)，initAssetRegisters(Vue)这些静态方法。
 + 最终在'src/core/instance/index.js'文件中找到了Vue的定义，终于找到你了。。
 ##### 'src/core/instance/index.js'
 + Vue实际就是一个function，而且Vue必须通过new的方式初始化，不然会报一个错误：vue必须通过new来调用，
