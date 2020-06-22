@@ -43,6 +43,6 @@ new Vue方法里执行了_init()方法，这个_init()方法是当前文件initM
 + _createElement中最主要的两个方法normalizeChildren和simpleNormalizeChildren方法，其中simpleNormalizeChildren是经过编译生成的render使用的，normalizeChildren是手写render使用的。
 ### Vue.prototype._update
 在updateComponent函数中执行的 **vm._update(vm._render(), hydrating)**，vm._render()执行后得到的是vnode，返回后传给vm._update方法把vnode渲染成真实的DOM。
-+ _update 的核心就是调用 vm.__patch__方法，这个方法在不同的平台（web和weex）定义是不一样的，在web中是定义在‘src/platforms/web/runtime/index.js’中。
++ _update 的核心就是调用 vm.__patch__方法，这个方法在不同的平台（web和weex）定义是不一样的，在web中是定义在‘src/platforms/web/runtime/index.js’中,这里利用了函数柯里化的技巧把平台化的差异在“src\core\vdom\patch.js”中抹平，而不用每次使用时都用if...else...区分平台，'src\core\vdom\patch.js'这个文件最后返回了patch方法，就是我们实际调用的__patch__方法。
 + 
 
