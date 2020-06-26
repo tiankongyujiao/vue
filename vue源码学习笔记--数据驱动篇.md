@@ -44,5 +44,5 @@ new Vue方法里执行了_init()方法，这个_init()方法是当前文件initM
 ### Vue.prototype._update
 在updateComponent函数中执行的 **vm._update(vm._render(), hydrating)**，vm._render()执行后得到的是vnode，返回后传给vm._update方法把vnode渲染成真实的DOM。
 + _update 的核心就是调用 vm.__patch__方法，这个方法在不同的平台（web和weex）定义是不一样的，在web中是定义在‘src/platforms/web/runtime/index.js’中,这里利用了函数柯里化的技巧把平台化的差异在“src\core\vdom\patch.js”中抹平，而不用每次使用时都用if...else...区分平台，'src\core\vdom\patch.js'这个文件最后返回了patch方法，就是我们实际调用的__patch__方法。
-+ 
++ 核心方法createElm就是把vnode挂载到真实的dom，里层的createChildren会递归调用createElm，一层一层传，后面会调用insert方法插入到dom，insert是从子开始插入到父，一层层执行下去，直到最顶层的父级插入到body。整个插入顺序就是先子后父。
 
