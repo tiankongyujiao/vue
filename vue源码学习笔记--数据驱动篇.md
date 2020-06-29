@@ -12,6 +12,7 @@
 + 在这个文件里定义了一堆mixin方法，这也是vue不适用class来定义的原因。这些mixin包括：initMixin(Vue),stateMixin(Vue),eventsMixin(Vue),lifecycleMixin(Vue),renderMixin(Vue)
 + initMixin(Vue)的定义是在'src/core/instance/init.js'中, initMixin实际上是往Vue的原型链prototype上挂了一个_init方法。
 + 每个mixin都是往原型上汇入定义的一些原型链的方法。
+>从上面可以看到'src/platforms/web/entry-runtime-with-compiler.js'入口文件定义了带编译版本的$mount方法，而后在'src/platforms/web/runtime/index.js'中定义了通用的$mount方法，带编译的$mount最终也会调用通用的$mount。在'src/core/index.js'中主要是定义了一些全局的API，在'src/core/instance/index.js'定义了Vue这个类，并挂在了一系列的原型方法。
 ### 数据驱动
 数据驱动是指视图由数据驱动生成，我们对视图的修改不会直接操作DOM，而是通过直接修改数据，相比于传统的使用jquery或者原生js操作DOM大大简化了代码量，特别是当交互复杂的时候，只关心数据的修改会让代码逻辑变得非常清晰，因为DOM变成了数据的映射，我们所有的逻辑都是对数据的修改，而不触碰DOM，这样的代码非常利于维护。
 ##### new Vue()
