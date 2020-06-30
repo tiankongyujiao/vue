@@ -105,6 +105,51 @@ const Demo = {
 }
 // 或者用于计算属性中
 ```
+```
+// 在前端项目中，有许多数据需要在各个组件之间进行传递共享，这时候就需要有一个状态管理工具，一般情况下，我们都会使用Vuex，但对于小型项目来说, 以使用Vue2.6提供的新API Vue.observable手动打造一个Vuex.
+
+// 创建 store
+
+import Vue from 'vue'
+
+// 通过Vue.observable创建一个可响应的对象
+export const store = Vue.observable({
+  userInfo: {},
+  roleIds: []
+})
+
+// 定义 mutations, 修改属性
+export const mutations = {
+  setUserInfo(userInfo) {
+    store.userInfo = userInfo
+  },
+  setRoleIds(roleIds) {
+    store.roleIds = roleIds
+  }
+}
+
+// 在组件中引用
+<template>
+  <div>
+    {{ userInfo.name }}
+  </div>
+</template>
+<script>
+import { store, mutations } from '../store'
+export default {
+  computed: {
+    userInfo() {
+      return store.userInfo
+    }
+  },
+  created() {
+    mutations.setUserInfo({
+      name: '子君'
+    })
+  }
+}
+</script>
+```
 ##### 5. 通过provider/inject依赖注入（提供的属性非响应式）
 简单的来说就是在父组件中通过provider来提供变量，然后在子组件中通过inject来注入变量。
 ```
