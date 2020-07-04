@@ -128,4 +128,49 @@ function createElm (
   // ...
 }
 ```
-
+在createElm方法中首先会调用createComponent方法：
+```
+function createComponent(vnode, insertedVnodeQueue, parentElm, refElm) {
+  let i = vnode.data
+  if (isDef(i)) {
+      const isReactivated = isDef(vnode.componentInstance) && i.keepAlive
+      if (isDef(i = i.hook) && isDef(i = i.init)) {
+          i(vnode, false /* hydrating */ )
+      }
+      // after calling the init hook, if the vnode is a child component
+      // it should've created a child instance and mounted it. the child
+      // component also has set the placeholder vnode's elm.
+      // in that case we can just return the element and be done.
+      if (isDef(vnode.componentInstance)) {
+          initComponent(vnode, insertedVnodeQueue)
+          insert(parentElm, vnode.elm, refElm)
+          if (isTrue(isReactivated)) {
+              reactivateComponent(vnode, insertedVnodeQueue, parentElm, refElm)
+          }
+          return true
+      }
+  }
+}
+ ```
+注意这个createComponent方法要和创建VNode的createComponent方法区分开，那个是为了创建VNode，以及构造子类用的，这个是有了子类以后调用子类的_init方法用的。   
+我们在创建VNode的时候传入的data参数，首先判断是否有data，如果是正常初始化子类的话是有data的且有hooks钩子，然后调用钩子的init方法，即上文中我们提到的installComponentHooks(data)挂载到子类上的一些钩子，这里我们调用的是init钩子，这个钩子定义在创建子类VNode的‘src/core/vdom/create-component.js’中：
+```
+init (vnode: VNodeWithData, hydrating: boolean): ?boolean {
+  if (
+    vnode.componentInstance &&
+    !vnode.componentInstance._isDestroyed &&
+    vnode.data.keepAlive
+  ) {
+    // kept-alive components, treat as a patch
+    const mountedNode: any = vnode // work around flow
+    componentVNodeHooks.prepatch(mountedNode, mountedNode)
+  } else {
+    const child = vnode.componentInstance = createComponentInstanceForVnode(
+      vnode,
+      activeInstance
+    )
+    child.$mount(hydrating ? vnode.elm : undefined, hydrating)
+  }
+  }
+```
+这里我们会走到上面代码中的else逻辑，调用了createComponentInstanceForVnode实例化一个Vue的实例，然后通过$mount挂载子组件，下面分析这个过程：   
