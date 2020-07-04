@@ -15,6 +15,7 @@ var app = new Vue({
   render: h => h(App)
 })
 ```
+#### 一.调用createElement方法生成组件VNode
 在createElement调用_createElement方法生成虚拟dom的时候有个对tag标签的判断，如果是个普通的dom（即tab是个html标签（字符串））比如div，会创建一个普通的VNode节点，如果这时候我们的tag是个组件，那么tag就是一个Component类型的对象（上面我们传入的是一个App对象），这时候直接会调用createComponent方法创建一个组件VNode。 
 createComponent方法定义在‘src/core/vdom/create-component.js’中，这个方法主要来看三点：
 1. 构造子类构造函数：
@@ -27,17 +28,13 @@ export function createComponent (
   children: ?Array<VNode>,
   tag?: string
 ): VNode | Array<VNode> | void {
-
-  ...
-  
+  // ...
   const baseCtor = context.$options._base
   // plain options object: turn it into a constructor
   if (isObject(Ctor)) {
     Ctor = baseCtor.extend(Ctor)
   }
-  
-  ...
-  
+  // ...
 }
 ```
 我们在编写组件的时候，通常是创建一个普通的对象，如:
@@ -55,13 +52,9 @@ export default {
 这个继承方法的作用就是构造Vue的一个子类，这个方法传入的对象就是组件对象，比如上面的App（在单文件组件中export default导出的那个对象），这里继承的方法是使用了Object.create()函数（一种经典的原型继承的方式）：
 ```
  Vue.extend = function (extendOptions: Object): Function {
- 
-  ...
-  
+  // ... 
   const Super = this
-  
-  ...
-  
+  // ...
   const Sub = function VueComponent (options) {
     this._init(options)
   }
@@ -72,9 +65,7 @@ export default {
     Super.options,
     extendOptions
   )
-  
-  ...
-  
+  // ...
  }
 ```
 然后对Sub扩展了options，添加全局的API，并对配置中的props和computed做了初始化工作，并且最后对这个Sub构造函数做了缓存，避免多次执行 Vue.extend 的时候对同一个子组件重复构造。   
@@ -88,14 +79,10 @@ export function createComponent (
   children: ?Array<VNode>,
   tag?: string
 ): VNode | Array<VNode> | void {
-
-  ...
-  
+  // ...
   // install component management hooks onto the placeholder node
   installComponentHooks(data)
-  
-  ...
-  
+  // ...
 }
 ```
 在初始化一个组件Component类型的VNode的过程中实现了几个钩子函数：init，prepatch，insert，destroy。   
@@ -110,20 +97,35 @@ export function createComponent (
   children: ?Array<VNode>,
   tag?: string
 ): VNode | Array<VNode> | void {
-
-  ...
-  
+  // ...
   const vnode = new VNode(
     `vue-component-${Ctor.cid}${name ? `-${name}` : ''}`,
     data, undefined, undefined, undefined, context,
     { Ctor, propsData, listeners, tag, children },
     asyncFactory
   )
-  
-  ...
-  
+  // ... 
 }
 ```
 这里可以看到组件的VNode是没有parent的，是undefined，这点和普通的元素节点VNode不同，这点很关键，后面的patch过程也会提到。
+#### 二.创建完组件VNode，调用vm.__patch__把VNode转换成真是的DOM   
 
+patch的过程会调用createElm创建元素节点，createElm方法定义在‘src/core/vdom/patch.js’中：
+```
+function createElm (
+  vnode,
+  insertedVnodeQueue,
+  parentElm,
+  refElm,
+  nested,
+  ownerArray,
+  index
+) {
+  // ...
+  if (createComponent(vnode, insertedVnodeQueue, parentElm, refElm)) {
+    return
+  }
+  // ...
+}
+```
 
