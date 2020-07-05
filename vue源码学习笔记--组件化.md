@@ -220,7 +220,9 @@ Vue.prototype._render = function (): VNode {
   return vnode
 }
 ```
-这里只保留关键代码，这里的 _parentVnode 就是当前组件的父 VNode，而 render 函数生成的 vnode 当前组件的渲染 vnode，vnode 的 parent 指向了 _parentVnode，也就是 vm.$vnode，它们是一种父子的关系。
+这里只保留关键代码，这里的 _parentVnode 就是当前组件的父 VNode，而 render 函数生成的 vnode 是当前组件的渲染 vnode，vnode 的 parent 指向了 _parentVnode，也就是 vm.$vnode，它们是一种父子的关系。  
+这个调用render.call(vm._renderProxy, vm.$createElement)生成VNode，这里的这个render函数实际是通过webpack的vue-loader函数把单文件组件自动生成了一个render函数，这时候它的tag最外层的就是一个像div这样的html标签，即一个普通的节点，如果div中还有子组件，则会重复createElement函数中的createComponent函数，生成一个组件VNode，然后再去pathc生成真实dom，依此循环往下推，就构成了一个DOM树。  
+
 
 
 
