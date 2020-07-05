@@ -274,6 +274,7 @@ Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
     activeInstance = prevActiveInstance
     // ...
 }
+```
 这里会把当前激活的activeInstance赋值给prevActiveInstance，然后把vm赋值给activeInstance，即当前的vm成了当前激活的实例，这个activeInstance是在lifecycle模块定义的全局的变量，在‘src/core/instance/lifecycle.js’中有这么一行：*export let activeInstance: any = null*。  
 我们在createComponentInstanceForVnode时从lifecycle中获取activeInstanc作为createComponentInstanceForVnode的第二个参数，作为子组件的父实例parent，从而建立了父子关系的前提基础。  
 因为js是一个单线程，Vue的整个初始化时一个深度遍历的过程，在实例化子组件的过程中，它需要知道当前上下文的Vue实例是什么，并把它作为子组件的父Vue实例。  
