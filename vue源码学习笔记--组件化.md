@@ -174,3 +174,54 @@ init (vnode: VNodeWithData, hydrating: boolean): ?boolean {
   }
 ```
 这里我们会走到上面代码中的else逻辑，调用了createComponentInstanceForVnode实例化一个Vue的实例，然后通过$mount挂载子组件，下面分析这个过程：   
+1. 调用 createComponentInstanceForVnode 创建一个 Vue 的实例
+```
+export function createComponentInstanceForVnode (
+  vnode: any, // we know it's MountedComponentVNode but flow doesn't
+  parent: any, // activeInstance in lifecycle state
+): Component {
+  const options: InternalComponentOptions = {
+    _isComponent: true,
+    _parentVnode: vnode,
+    parent
+  }
+  // check inline-template render functions
+  const inlineTemplate = vnode.data.inlineTemplate
+  if (isDef(inlineTemplate)) {
+    options.render = inlineTemplate.render
+    options.staticRenderFns = inlineTemplate.staticRenderFns
+  }
+  return new vnode.componentOptions.Ctor(options)
+}
+```
++ 首先构建组件的参数options，然后执行new vnode.componentOptions.Ctor(options)创建一个Vue实例，并返回这个实例。这里的vnode.componentOptions.Ctor对应的就是子组件的构造函数，因为上面我们提到的实例化VNode的时候传入的第七个参数是一个解构对象，解构对象的第一个参数就是子组件的构造函数Ctor，VNode的第七个参数名字叫componentOptions，所以这时候我们通过vnode.componentOptions.Ctor获取的自然就是子组件的构造函数，即继承Vue的子构造器Sub，相当于new Sub(options)
++ 参数options对象的isComponent为true代表的是一个组件，parent表示当前激活的组件实例
++ 以上过程就完成了子组件的实例化，执行‘new Sub(options)’会调用Sub构造函数里的_init()方法初始化。
++ _init和普通节点不同的是多了参数的合并，把通过createComponentInstanceForVnode函数传入的参数合并到vm.$options中。
++ 在_init方法的最后并不会调用这里的$mount方法挂载组件，因为组件没有el，还记得我们之前创建组件实例以后，在createComponent的init钩子的最后调用了组件的child.$mount(hydrating ? vnode.elm : undefined, hydrating)方法，组件自己接管了$mount挂载，这里相当于执行了child.$mount(undefined, false)，它最终会调用mountComponent方法，最终调用vm._update(vm._render(), hydratin)，首先会调用vm._render()方法：
+```
+Vue.prototype._render = function (): VNode {
+  const vm: Component = this
+  const { render, _parentVnode } = vm.$options
+
+  
+  // set parent vnode. this allows render functions to have access
+  // to the data on the placeholder node.
+  vm.$vnode = _parentVnode
+  // render self
+  let vnode
+  try {
+    vnode = render.call(vm._renderProxy, vm.$createElement)
+  } catch (e) {
+    // ...
+  }
+  // set parent
+  vnode.parent = _parentVnode
+  return vnode
+}
+```
+这里只保留关键代码，这里的 _parentVnode 就是当前组件的父 VNode，而 render 函数生成的 vnode 当前组件的渲染 vnode，vnode 的 parent 指向了 _parentVnode，也就是 vm.$vnode，它们是一种父子的关系。
+
+
+
+
