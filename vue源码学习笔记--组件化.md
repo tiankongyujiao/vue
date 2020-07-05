@@ -69,7 +69,7 @@ export default {
  }
 ```
 然后对Sub扩展了options，添加全局的API，并对配置中的props和computed做了初始化工作，并且最后对这个Sub构造函数做了缓存，避免多次执行 Vue.extend 的时候对同一个子组件重复构造。   
-当我们实例化一个Sub的时候，就会调用Sub构造函数中的this._init(options)方法，即Vue原型上的_init方法，再次走到了Vue实例化的初始逻辑。
+当我们实例化一个Sub的时候，就会调用Sub构造函数中的this._init(options)方法，即Vue原型上的_init方法，再次走到了Vue实例化的初始逻辑。  
 2. 接下来是安装组件钩子函数  
 ```
 export function createComponent (
