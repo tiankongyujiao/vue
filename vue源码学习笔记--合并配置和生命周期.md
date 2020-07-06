@@ -19,7 +19,27 @@ Vue.prototype._init = function (options?: Object) {
   // ...
 }
 ```
-其中if进去是子组件的逻辑，通过if的 options._isComponent 可以看出是个组件实例，这时候调用initInternalComponent(vm, options)合并配置，这个合并配置相对简单，因为子组件的合并在通过Vue.extend创建子组件实例的时候已经通过mergeOptions合并了一层（合并了大Vue以及子组件对象options），这次合并即这里我说的第三个地方的合并。在回到上面的代码，如果不是子组件实例，则会走到else逻辑，调用mergeOptions方法合并配置。从上面我们可以看到合并配置使用的主要就是mergeOptions方法，下面分析这个方法：
+其中if进去是子组件的逻辑，通过if的 options._isComponent 可以看出是个组件实例，这时候调用initInternalComponent(vm, options)合并配置，这个合并配置相对简单，因为子组件的合并在通过Vue.extend创建子组件实例的时候已经通过mergeOptions合并了一层（合并了大Vue以及子组件对象options），这次合并即这里我说的第三个地方的合并。在回到上面的代码，如果不是子组件实例，则会走到else逻辑，调用mergeOptions方法合并配置。  
+我们先来看else的逻辑，在执行new Vue的时候回走到else的逻辑，resolveConstructorOptions(vm.constructor)的返回值在这里就是Vue.options，这个值在initGlobalAPI(Vue)中定义，这个函数在‘src/core/global-api/index.js’中定义：
+```
+export function initGlobalAPI (Vue: GlobalAPI) {
+  // ...
+  Vue.options = Object.create(null)
+  ASSET_TYPES.forEach(type => {
+    Vue.options[type + 's'] = Object.create(null)
+  })
+
+  // this is used to identify the "base" constructor to extend all plain-object
+  // components with in Weex's multi-instance scenarios.
+  Vue.options._base = Vue
+
+  extend(Vue.options.components, builtInComponents)
+  // ...
+}
+```
+开始创建了一个空对象赋值给Vue.options，然后通过ASSET_TYPES.forEach这句把components,directives,filters加到Vue.options上面，然后把_base加到Vue.options上，这个_base我们在实例化子组件的时候用到的。然后把一些内置的组建，Vue中内置的组建有keep-alive, transition, transition-group组建挂到Vue.options.components上面，这也是我们不注册这三个组建就能使用的原因。
+
+从上面我们可以看到合并配置使用的主要就是*mergeOptions*方法，下面分析这个方法：
 ```
 /**
  * Merge two option objects into a new one.
@@ -98,9 +118,33 @@ LIFECYCLE_HOOKS.forEach(hook => {
 })
 ```
 其中的LIFECYCLE_HOOKS定义了组件的所有生命周期钩子，定义在‘src/shared/constants.js’中，有下面这些钩子函数：beforeCreate,created,beforeMount,mounted,beforeUpdate,updated,beforeDestroy,activated,deactivated,errorCaptured.  
-mergeHook的实现是使用了两层三元运算符，如果不存在childVal，直接返回parentVal，如果存在childVal切存在parentVal，则吧childVal合并到parentVal后返回，如果存在childVal，不存在parentVal，则把childVal放入一个数组返回一个只有一个元素的数组，总之mergeOptions最终返回的都是一个数组，直接返回的parentVal其实也是一个之前就合并过的数组。   
+mergeHook的实现是使用了两层三元运算符，如果不存在childVal，直接返回parentVal，如果存在childVal且存在parentVal，则把childVal合并到parentVal后返回，如果存在childVal，不存在parentVal，则把childVal放入一个数组返回一个只有一个元素的数组，总之mergeOptions最终返回的都是一个数组，直接返回的parentVal其实也是一个之前就合并过的数组。   
 
 所有的属性合并完成以后最终到放到options对象中返回。
+
+分析完了else的逻辑，再来看看if是组件实例的合并配置：  
+前面提到过子组件实例的合并配置在Vue.extend中就完成了主要配置（把大Vue和传入的配置options做合并），if逻辑里面又调用了initInternalComponent这个方法做又一次的合并，下面看下这个方法：
+```
+export function initInternalComponent (vm: Component, options: InternalComponentOptions) {
+  const opts = vm.$options = Object.create(vm.constructor.options)
+  // doing this because it's faster than dynamic enumeration.
+  const parentVnode = options._parentVnode
+  opts.parent = options.parent
+  opts._parentVnode = parentVnode
+
+  const vnodeComponentOptions = parentVnode.componentOptions
+  opts.propsData = vnodeComponentOptions.propsData
+  opts._parentListeners = vnodeComponentOptions.listeners
+  opts._renderChildren = vnodeComponentOptions.children
+  opts._componentTag = vnodeComponentOptions.tag
+
+  if (options.render) {
+    opts.render = options.render
+    opts.staticRenderFns = options.staticRenderFns
+  }
+}
+```
+方法内的第一行的vm.constructor就是指子组件Sub的构造函数，相当于*vm.$options = Object.create(Sub.options)*，接着又把实例化子组件传入的子组件父 VNode 实例 parentVnode、子组件的父 Vue 实例 parent 保存到 vm.$options 中，另外还保留了 parentVnode 配置中的如 propsData 等其它的属性，这么看来，initInternalComponent 只是做了简单一层对象赋值，并不涉及到递归、合并策略等复杂逻辑。
 
 
 
