@@ -20,7 +20,7 @@ Vue.prototype._init = function (options?: Object) {
 }
 ```
 其中if进去是子组件的逻辑，通过if的 options._isComponent 可以看出是个组件实例，这时候调用initInternalComponent(vm, options)合并配置，这个合并配置相对简单，因为子组件的合并在通过Vue.extend创建子组件实例的时候已经通过mergeOptions合并了一层（合并了大Vue以及子组件对象options），这次合并即这里我说的第三个地方的合并。在回到上面的代码，如果不是子组件实例，则会走到else逻辑，调用mergeOptions方法合并配置。  
-我们先来看else的逻辑，在执行new Vue的时候回走到else的逻辑，resolveConstructorOptions(vm.constructor)的返回值在这里就是Vue.options，这个值在initGlobalAPI(Vue)中定义，这个函数在‘src/core/global-api/index.js’中定义：
+先来看else的逻辑，在执行new Vue的时候回走到else的逻辑，resolveConstructorOptions(vm.constructor)的返回值在这里就是Vue.options，这个值在initGlobalAPI(Vue)中定义，这个函数在‘src/core/global-api/index.js’中定义：
 ```
 export function initGlobalAPI (Vue: GlobalAPI) {
   // ...
@@ -146,6 +146,36 @@ export function initInternalComponent (vm: Component, options: InternalComponent
 ```
 方法内的第一行的vm.constructor就是指子组件Sub的构造函数，相当于*vm.$options = Object.create(Sub.options)*，接着又把实例化子组件传入的子组件父 VNode 实例 parentVnode、子组件的父 Vue 实例 parent 保存到 vm.$options 中，另外还保留了 parentVnode 配置中的如 propsData 等其它的属性，这么看来，initInternalComponent 只是做了简单一层对象赋值，并不涉及到递归、合并策略等复杂逻辑。
 
-
-
+#### 二.生命周期
+每个Vue实例在被创建的时候都要经过一系列的初始化工作：设置数据监听，编译模板，挂在实例到DOM，数据变化时更新DOM。在这个过程中会执行一些列的生命周期钩子，让我们能够在特定的场景下添加自己的代码。  
+源码中最终执行生命周期钩子是通过调用callHook方法：
+```
+export function callHook (vm: Component, hook: string) {
+  // #7573 disable dep collection when invoking lifecycle hooks
+  pushTarget()
+  const handlers = vm.$options[hook]
+  const info = `${hook} hook`
+  if (handlers) {
+    for (let i = 0, j = handlers.length; i < j; i++) {
+      invokeWithErrorHandling(handlers[i], vm, null, vm, info)
+    }
+  }
+  if (vm._hasHookEvent) {
+    vm.$emit('hook:' + hook)
+  }
+  popTarget()
+}
+```
+callHook 函数就是：根据传入的字符串 hook，去拿到 vm.$options[hook] 对应的回调函数数组（上面我们提到过合并后的回调钩子都是一个数组），然后遍历执行，执行的时候把 vm 作为函数执行的上下文。  
+每个生命周期钩子调用的时机：  
++ beforeCreate: 实例化 Vue 的阶段，初始化生命周期，事件，渲染函数之后，初始化 props、data、methods、watch、computed 等属性之前。获取不到data。不能够访问 DOM，可以和后台交互数据。执行顺序先父后子。
++ created:  实例化 Vue 的阶段，初始化 props、data、methods、watch、computed 等属性之后。能获取到data。不能够访问 DOM，可以和后台交互数据。执行顺序先父后子。
++ beforeMount:  DOM 挂载之前，它的调用时机是在 mountComponent 函数中，定义在 src/core/instance/lifecycle.js 中。不可以操作DOM。执行顺序先父后子。
++ mounted: DOM 挂载之后，执行顺序先子后父。可以操作DOM。
++ beforeUpdate: beforeUpdate 的执行时机是在渲染 Watcher 的 before 函数中，发生在数据更新前。
++ updated: 发生在数据更新后。
++ beforeDestory: 组件销毁的阶段前。
++ destoryed: 组件销毁的阶段后。
++ activated 和 deactivated 钩子函数是专门为 keep-alive 组件定制的钩子
++ 
 
