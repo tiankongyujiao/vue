@@ -177,5 +177,4 @@ callHook 函数就是：根据传入的字符串 hook，去拿到 vm.$options[ho
 + beforeDestory: 组件销毁的阶段前。
 + destoryed: 组件销毁的阶段后。
 + activated 和 deactivated 钩子函数是专门为 keep-alive 组件定制的钩子
-+ 
 
