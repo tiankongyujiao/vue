@@ -163,7 +163,7 @@ export function callHook (vm: Component, hook: string) {
   if (vm._hasHookEvent) {
     vm.$emit('hook:' + hook)
   }
-  popTarget()
+  popTarget() 
 }
 ```
 callHook 函数就是：根据传入的字符串 hook，去拿到 vm.$options[hook] 对应的回调函数数组（上面我们提到过合并后的回调钩子都是一个数组），然后遍历执行，执行的时候把 vm 作为函数执行的上下文。  
