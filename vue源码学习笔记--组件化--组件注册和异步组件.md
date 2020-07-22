@@ -145,7 +145,25 @@ export function resolveAsset (
 >这段逻辑很简单，先通过 const assets = options[type] 拿到 assets，然后再尝试拿 assets[id]，这里有个顺序，先直接使用 id 拿，如果不存在，则把 id 变成驼峰的形式再拿，如果仍然不存在则在驼峰的基础上把首字母再变成大写的形式再拿，如果仍然拿不到则报错。这样说明了我们在使用 Vue.component(id, definition) 全局注册组件的时候，id 可以是连字符、驼峰或首字母大写的形式。  
 那么回到我们的调用 resolveAsset(context.$options, 'components', tag)，即拿 vm.$options.components[tag]，这样我们就可以在 resolveAsset 的时候拿到这个组件的构造函数，并作为 createComponent 的钩子的参数。  
 
-全局注册的组件
+其中全局注册的的组件通过resoveAssert是在原型上拿的方法，而局部注册的组件自身的components就有相应的组件，因为合并组件的策略如下：
+```
+function mergeAssets (
+  parentVal: ?Object,
+  childVal: ?Object,
+  vm?: Component,
+  key: string
+): Object {
+  const res = Object.create(parentVal || null)
+  if (childVal) {
+    process.env.NODE_ENV !== 'production' && assertObjectType(key, childVal, vm)
+    return extend(res, childVal)
+  } else {
+    return res
+  }
+}
+```
+首先把父亲通过Object.create方法挂到res的原型上，然后如果有子元素，再在res上面合并属性，如果没有子元素，则直接返回res，所以全局注册的组件在原型上，而局部注册的组建在自身组件的components上。
+
 ### 2.局部注册
 在组件实例化阶段有个合并options的逻辑，其中也会合并components，即把 components 合并到 vm.$options.components 上，这样我们就可以在上面resoveAsset的时候拿到这个组件的构造函数，并作为 createComponent 的钩子的参数。
 
