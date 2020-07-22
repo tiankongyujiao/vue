@@ -61,4 +61,4 @@ export const ASSET_TYPES = [
   'filter'
 ]
 ```
-其中之一就是component组件
+在这里初始化了三个全局函数，其中之一就是component组件
