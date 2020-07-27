@@ -31,4 +31,4 @@ Vue.component('hello-world', function(resolve,reject){
   }
 // ..
 ```
-这里Ctor其实就是我们定义的工厂函数，所以它的cid不存在，进入if逻辑，执行resolveAsyncComponent方法，加载异步组件，其中这行代码就是加载了异步组件：*const res = factory(resolve, reject)*，这时执行了require，由于js的单线程，会继续执行resolveAsyncComponent，
+这里Ctor其实就是我们定义的工厂函数，所以它的cid不存在，进入if逻辑，执行resolveAsyncComponent方法，加载异步组件，其中这行代码就是加载了异步组件：*const res = factory(resolve, reject)*，这时执行了require，由于js的单线程，会继续执行resolveAsyncComponent，此时返回的是一个空的注释节点。同步代码执行完了，会执行require的回调，resolve方法被执行，把resolve缓存到factory.resolve上面，
