@@ -1,0 +1,15 @@
+### vue源码学习笔记--组件化--异步组件
+异步组件注册有三种方式：1.工厂函数 2.Promise 创建组件 3.高级异步组件  
+#### 1.工厂函数方式
+使用方式如下：
+```
+Vue.component('hello-world', function(resolve,reject){
+  require(['./components/HelloWorld.vue'], function(res){
+  	resolve(res)
+  })
+})
+```
+上面使用工厂函数的方式定义了helloWorld异步组件，在调用helloWorld的地方，创建虚拟dom时，调用了resolveAsset方法，解析出来的就是我们这里定义的工厂函数，然后执行createComponent方法，在createComponent中有这么一段逻辑：
+```
+
+```
