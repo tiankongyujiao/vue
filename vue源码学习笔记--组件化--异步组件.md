@@ -143,4 +143,4 @@ resolveAsyncComponent代码片段
     }
 // ...
 ```
-执行 **const res = factory(resolve, reject)** 即执行了**() => import('./my-async-component')** 然后返回了一个Promise对象，即为 **res = factory(resolve, reject)** 的返回值，然后执行 **res.then(resolve, reject)** 异步加载成功执行resolve，失败执行reject，resolve的参数即为加载进来的异步组件。
+执行 **const res = factory(resolve, reject)** 即执行了 **() => import('./my-async-component')** 然后返回了一个Promise对象，即为 **res = factory(resolve, reject)** 的返回值，然后执行 **res.then(resolve, reject)** 异步加载成功执行resolve，失败执行reject，resolve的参数即为加载进来的异步组件。
