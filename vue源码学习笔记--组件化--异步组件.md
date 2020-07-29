@@ -106,48 +106,7 @@ export function resolveAsyncComponent (
 
     const res = factory(resolve, reject)
 
-    if (isObject(res)) {
-      if (isPromise(res)) {
-        // () => Promise
-        if (isUndef(factory.resolved)) {
-          res.then(resolve, reject)
-        }
-      } else if (isPromise(res.component)) {
-        res.component.then(resolve, reject)
-
-        if (isDef(res.error)) {
-          factory.errorComp = ensureCtor(res.error, baseCtor)
-        }
-
-        if (isDef(res.loading)) {
-          factory.loadingComp = ensureCtor(res.loading, baseCtor)
-          if (res.delay === 0) {
-            factory.loading = true
-          } else {
-            timerLoading = setTimeout(() => {
-              timerLoading = null
-              if (isUndef(factory.resolved) && isUndef(factory.error)) {
-                factory.loading = true
-                forceRender(false)
-              }
-            }, res.delay || 200)
-          }
-        }
-
-        if (isDef(res.timeout)) {
-          timerTimeout = setTimeout(() => {
-            timerTimeout = null
-            if (isUndef(factory.resolved)) {
-              reject(
-                process.env.NODE_ENV !== 'production'
-                  ? `timeout (${res.timeout}ms)`
-                  : null
-              )
-            }
-          }, res.timeout)
-        }
-      }
-    }
+    // ...
 
     sync = false
     // return in case resolved synchronously
@@ -159,3 +118,29 @@ export function resolveAsyncComponent (
 ```
 加载异步组件：其中这行代码就是加载了异步组件：*const res = factory(resolve, reject)*，这时执行了require，由于js的单线程，会继续执行resolveAsyncComponent，此时返回的是一个空的注释节点。  
 同步代码执行完了，会执行require的回调，resolve方法被执行，把resolve缓存到factory.resolve上面，然后执行forceRender方法，forceRender遍历owners执行$forceUpdate方法，调用渲染watch，重新渲染， 又走到了_createElement方法，后面再调用resolveAsyncComponent返回的就是异步组件的构造器factory.resolve，后面的逻辑就和同步是一样的了。
+#### 2.通过import()的形式加载组件，import()函数返回的实际就是一个promise
+```
+Vue.component(
+  'async-webpack-example',
+  // 该 `import` 函数返回一个 `Promise` 对象。
+  () => import('./my-async-component')
+)
+```
+```
+resolveAsyncComponent代码片段
+// ...
+    const res = factory(resolve, reject)
+
+    if (isObject(res)) {
+      if (isPromise(res)) {
+        // () => Promise
+        if (isUndef(factory.resolved)) {
+          res.then(resolve, reject)
+        }
+      } else if (isPromise(res.component)) {
+        // ...
+      }
+    }
+// ...
+```
+执行 **const res = factory(resolve, reject)** 即执行了**() => import('./my-async-component')** 然后返回了一个Promise对象，即为 **res = factory(resolve, reject)** 的返回值，然后执行 **res.then(resolve, reject)** 异步加载成功执行resolve，失败执行reject，resolve的参数即为加载进来的异步组件。
