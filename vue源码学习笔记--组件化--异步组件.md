@@ -170,4 +170,133 @@ const AsyncComp = () => ({
 
 Vue.component('hello-world', AsyncComp)
 ```
-Vue通过高级异步组件来确定loading和error的渲染时机
+由于异步组件都是异步加载的，受网络环境等的因素影响，异步组件可能加载的慢或者出错，这时候我们就要设置loading和error组件在真正组件没有加载进来之前来填充dom，等到真正的异步组件加载进来再来替换它们。  
+Vue通过高级异步组件来确定loading和error的渲染时机，我们只要在对象配置的时候定义好loading和error就可以了，完全不用关心它具体的渲染逻辑，这部分逻辑在Vue的源码里面已经帮我们处理好了，下面来看下这个渲染逻辑：
+```
+// 为了看的更直观，贴出resolveAsyncComponent所有代码
+export function resolveAsyncComponent (
+  factory: Function,
+  baseCtor: Class<Component>
+): Class<Component> | void {
+  if (isTrue(factory.error) && isDef(factory.errorComp)) {
+    return factory.errorComp
+  }
+
+  if (isDef(factory.resolved)) {
+    return factory.resolved
+  }
+
+  const owner = currentRenderingInstance
+  if (owner && isDef(factory.owners) && factory.owners.indexOf(owner) === -1) {
+    // already pending
+    factory.owners.push(owner)
+  }
+
+  if (isTrue(factory.loading) && isDef(factory.loadingComp)) {
+    return factory.loadingComp
+  }
+
+  if (owner && !isDef(factory.owners)) {
+    const owners = factory.owners = [owner]
+    let sync = true
+    let timerLoading = null
+    let timerTimeout = null
+
+    ;(owner: any).$on('hook:destroyed', () => remove(owners, owner))
+
+    const forceRender = (renderCompleted: boolean) => {
+      for (let i = 0, l = owners.length; i < l; i++) {
+        (owners[i]: any).$forceUpdate()
+      }
+
+      if (renderCompleted) {
+        owners.length = 0
+        if (timerLoading !== null) {
+          clearTimeout(timerLoading)
+          timerLoading = null
+        }
+        if (timerTimeout !== null) {
+          clearTimeout(timerTimeout)
+          timerTimeout = null
+        }
+      }
+    }
+
+    const resolve = once((res: Object | Class<Component>) => {
+      // cache resolved
+      factory.resolved = ensureCtor(res, baseCtor)
+      // invoke callbacks only if this is not a synchronous resolve
+      // (async resolves are shimmed as synchronous during SSR)
+      if (!sync) {
+        forceRender(true)
+      } else {
+        owners.length = 0
+      }
+    })
+
+    const reject = once(reason => {
+      process.env.NODE_ENV !== 'production' && warn(
+        `Failed to resolve async component: ${String(factory)}` +
+        (reason ? `\nReason: ${reason}` : '')
+      )
+      if (isDef(factory.errorComp)) {
+        factory.error = true
+        forceRender(true)
+      }
+    })
+
+    const res = factory(resolve, reject)
+
+    if (isObject(res)) {
+      if (isPromise(res)) {
+        // () => Promise
+        if (isUndef(factory.resolved)) {
+          res.then(resolve, reject)
+        }
+      } else if (isPromise(res.component)) {
+        res.component.then(resolve, reject)
+
+        if (isDef(res.error)) {
+          factory.errorComp = ensureCtor(res.error, baseCtor)
+        }
+
+        if (isDef(res.loading)) {
+          factory.loadingComp = ensureCtor(res.loading, baseCtor)
+          if (res.delay === 0) {
+            factory.loading = true
+          } else {
+            timerLoading = setTimeout(() => {
+              timerLoading = null
+              if (isUndef(factory.resolved) && isUndef(factory.error)) {
+                factory.loading = true
+                forceRender(false)
+              }
+            }, res.delay || 200)
+          }
+        }
+
+        if (isDef(res.timeout)) {
+          timerTimeout = setTimeout(() => {
+            timerTimeout = null
+            if (isUndef(factory.resolved)) {
+              reject(
+                process.env.NODE_ENV !== 'production'
+                  ? `timeout (${res.timeout}ms)`
+                  : null
+              )
+            }
+          }, res.timeout)
+        }
+      }
+    }
+
+    sync = false
+    // return in case resolved synchronously
+    return factory.loading
+      ? factory.loadingComp
+      : factory.resolved
+  }
+}
+```
+上面代码中，第一次进来的时候factory没有error，resolved，loadding，所以这部分直接跳过，然后定义了forceRender，resolve，reject，然后通过 **const res = factory(resolve, reject)** 加载异步组件，这时候返回的res是一个对象，他不是一个promise对象，进入else逻辑，res.component是一个pormise对象，调用res.component.then(resolve, reject)，等到异步加载的文件加载进来以后就会执行resolve，由于是异步加载，同步执行下面的代码（这时候还没有resolve），然后判断error和loadding有没有定义，res对象是有error和loadding属性对象的，这时候通过ensureCtor方法把error和loadding组件对象转成一个构造器VueComponent，并且loaddig逻辑里面，如果设置的delay是0，那么直接赋值factory.loading为true，那么在最后返回值的时候直接返回的就是loadding的构造器而不是undefined，这时候就会先渲染loadding组件；如果delay不是0，这时候第一返回的就是一个undefined，createComponent通过createAsyncPlaceholder会创建一个注释节点，然后else逻辑设定了一个定时器setTimeout，即delay时间以后，如果还是没有resolve也没有error，就赋值factory.loadding为true，然后强制重新渲染一次组件，组件从注释节点变为loadding节点，后面如果resolve了，然后就会调用forceRender重新渲染异步加载进来的真正的组件。这个侯曼还有一个出错的逻辑，即timeout秒以后，会强制执行出错error组件的渲染，可以看到resolveAsyncComponent方法factory.error的判断逻辑是第一位的，如果出错了就不往后执行了，直接渲染出错的error组件。
+
