@@ -298,5 +298,8 @@ export function resolveAsyncComponent (
   }
 }
 ```
-上面代码中，第一次进来的时候factory没有error，resolved，loadding，所以这部分直接跳过，然后定义了forceRender，resolve，reject，然后通过 **const res = factory(resolve, reject)** 加载异步组件，这时候返回的res是一个对象，他不是一个promise对象，进入else逻辑，res.component是一个pormise对象，调用res.component.then(resolve, reject)，等到异步加载的文件加载进来以后就会执行resolve，由于是异步加载，同步执行下面的代码（这时候还没有resolve），然后判断error和loadding有没有定义，res对象是有error和loadding属性对象的，这时候通过ensureCtor方法把error和loadding组件对象转成一个构造器VueComponent，并且loaddig逻辑里面，如果设置的delay是0，那么直接赋值factory.loading为true，那么在最后返回值的时候直接返回的就是loadding的构造器而不是undefined，这时候就会先渲染loadding组件；如果delay不是0，这时候第一返回的就是一个undefined，createComponent通过createAsyncPlaceholder会创建一个注释节点，然后else逻辑设定了一个定时器setTimeout，即delay时间以后，如果还是没有resolve也没有error，就赋值factory.loadding为true，然后强制重新渲染一次组件，组件从注释节点变为loadding节点，后面如果resolve了，然后就会调用forceRender重新渲染异步加载进来的真正的组件。这个侯曼还有一个出错的逻辑，即timeout秒以后，会强制执行出错error组件的渲染，可以看到resolveAsyncComponent方法factory.error的判断逻辑是第一位的，如果出错了就不往后执行了，直接渲染出错的error组件。
-
+上面代码中，第一次进来的时候factory没有error，resolved，loadding，所以这部分直接跳过，然后定义了forceRender，resolve，reject，然后通过 **const res = factory(resolve, reject)** 加载异步组件，这时候返回的res是一个对象，他不是一个promise对象，进入else逻辑，res.component是一个pormise对象，调用 **res.component.then(resolve, reject)** ，等到异步加载的文件加载进来以后就会执行resolve，由于是异步加载，同步执行下面的代码（这时候还没有resolve）；  
+然后判断error和loadding有没有定义，res对象是有error和loadding属性对象的，这时候通过ensureCtor方法把error和loadding组件对象转成一个构造器VueComponent；  
+这里loaddig逻辑里面，如果设置的delay是0，那么直接赋值factory.loading为true，那么在最后返回值的时候直接返回的就是loadding的构造器而不是undefined，这时候就会先渲染loadding组件；如果delay不是0，这时候第一返回的就是一个undefined，createComponent通过createAsyncPlaceholder会创建一个注释节点，然后else逻辑设定了一个定时器setTimeout，即delay时间以后，如果还是没有resolve也没有error，就赋值factory.loadding为true，然后强制重新渲染一次组件，组件从注释节点变为loadding节点，后面如果resolve了，然后就会调用forceRender重新渲染异步加载进来的真正的组件。  
+这里还有一个出错的逻辑，即timeout秒以后，会强制执行出错error组件的渲染，可以看到resolveAsyncComponent方法factory.error的判断逻辑是第一位的，如果出错了就不往后执行了，直接渲染出错的error组件。
+> 通过以上代码分析，我们对 Vue 的异步组件的实现有了深入的了解，知道了 3 种异步组件的实现方式，并且看到高级异步组件的实现是非常巧妙的，它实现了 loading、resolve、reject、timeout 4 种状态。异步组件实现的本质是 2 次或者 2 次以上（有delay不是 0 时，第一次渲染注释节点，第二次loadding节点，第三次真正的异步组件节点）渲染，除了 0 delay 的高级异步组件第一次直接渲染成 loading 组件外，其它都是第一次渲染生成一个注释节点，当异步获取组件成功后，再通过 forceRender 强制重新渲染，这样就能正确渲染出我们异步加载的组件了。
