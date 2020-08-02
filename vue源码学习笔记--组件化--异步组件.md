@@ -144,3 +144,30 @@ resolveAsyncComponent代码片段
 // ...
 ```
 执行 **const res = factory(resolve, reject)** 即执行了 **() => import('./my-async-component')** 然后返回了一个Promise对象，即为 **res = factory(resolve, reject)** 的返回值，然后执行 **res.then(resolve, reject)** 异步加载成功执行resolve，失败执行reject，resolve的参数即为加载进来的异步组件。
+#### 4.高级异步组件
+```
+const LoadingComp = {
+	template: "<div>loading</div>"
+}
+
+const ErrorComp = {
+	template: "<div>error</div>"
+}
+
+const AsyncComp = () => ({
+  // 需要加载的组件。应当是一个 Promise
+	component: import('./components/HelloWorld.vue'),
+  // 加载中应当渲染的组件
+	loading: LoadingComp,
+  // 出错时渲染的组件
+	error: ErrorComp,
+  // 渲染加载中组件前的等待时间。默认：200ms。
+	delay: 0,
+  // 最长等待时间。超出此时间则渲染错误组件。默认：Infinity
+	timeout: 10000
+
+})
+
+Vue.component('hello-world', AsyncComp)
+```
+Vue通过高级异步组件来确定loading和error的渲染时机
