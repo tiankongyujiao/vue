@@ -42,7 +42,7 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
-  // 每个属性的dep实例，在闭包返回内的dep
+  // 每个属性的dep实例，在闭包范围内的dep
   const dep = new Dep()
 
   const property = Object.getOwnPropertyDescriptor(obj, key)
