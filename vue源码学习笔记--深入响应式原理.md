@@ -143,3 +143,146 @@ export default class Dep {
   }
 }
 ```
+#### 四.Watcher
+```
+export default class Watcher {
+    // ...
+
+    constructor(
+        vm: Component,
+        expOrFn: string | Function,
+        cb: Function,
+        options ? : ? Object,
+        isRenderWatcher ? : boolean
+    ) {
+        this.vm = vm
+        if (isRenderWatcher) {
+            vm._watcher = this
+        }
+        vm._watchers.push(this)
+        
+        // ...
+        
+        // 新旧deps
+        this.deps = []
+        this.newDeps = []
+        this.depIds = new Set()
+        this.newDepIds = new Set()
+        
+        // ...
+        
+        if (typeof expOrFn === 'function') {
+            // updateComponent赋值到this.getter
+            this.getter = expOrFn
+        } else {
+        
+            // ...
+            
+        }
+        this.value = this.lazy ?
+            undefined :
+            this.get()
+    }
+
+    /**
+     * Evaluate the getter, and re-collect dependencies.
+     */
+    get() {
+        // 把当前的渲染watcher赋值给Dep.target(全局唯一一个)，并push进targetStack数组中
+        pushTarget(this)
+        let value
+        const vm = this.vm
+        try {
+            // 执行 updateComponent 方法
+            value = this.getter.call(vm, vm)
+        } catch (e) {
+            if (this.user) {
+                handleError(e, vm, `getter for watcher "${this.expression}"`)
+            } else {
+                throw e
+            }
+        } finally {
+            // "touch" every property so they are all tracked as
+            // dependencies for deep watching
+            if (this.deep) {
+                traverse(value)
+            }
+            // 从targetStack数组中删除当前watcher，归还给它的父级watcher
+            popTarget()
+            this.cleanupDeps()
+        }
+        return value
+    }
+
+    /**
+     * Add a dependency to this directive.
+     */
+    addDep(dep: Dep) {
+        const id = dep.id
+        if (!this.newDepIds.has(id)) {
+            this.newDepIds.add(id)
+            this.newDeps.push(dep)
+            if (!this.depIds.has(id)) {
+                // 想dep的subs增加该渲染watcher
+                dep.addSub(this)
+            }
+        }
+    }
+
+    /**
+     * Clean up for dependency collection.
+     */
+    // 清除没用到的dep
+    cleanupDeps() {
+        let i = this.deps.length
+        while (i--) {
+            const dep = this.deps[i]
+            if (!this.newDepIds.has(dep.id)) {
+                // 清除没用到的dep，为的是在一个视图隐藏的时候不触发更新（这时候没必要更新，因为视图已经隐藏了），每个属性都对应一个dep，每个dep.subs里面都管理这这个属性对应的watcher，如果属性                 // 所在的视图被隐藏了，就清除这个dep.subs里面的watcher，等到执行dep.notify的时候this.subs就为空，就不会继续执行派发更新了。
+                dep.removeSub(this)
+            }
+        }
+        let tmp = this.depIds
+        this.depIds = this.newDepIds
+        this.newDepIds = tmp
+        this.newDepIds.clear()
+        tmp = this.deps
+        this.deps = this.newDeps
+        this.newDeps = tmp
+        this.newDeps.length = 0
+    }
+
+    /**
+     * Subscriber interface.
+     * Will be called when a dependency changes.
+     */
+    update() {
+        /* istanbul ignore else */
+        if (this.lazy) {
+            this.dirty = true
+        } else if (this.sync) {
+            this.run()
+        } else {
+            // watcher队列，排列watcher
+            queueWatcher(this)
+        }
+    }
+
+    /**
+     * Scheduler job interface.
+     * Will be called by the scheduler.
+     */
+    run() {
+        if (this.active) {
+            // 派发更新的时候调用watcher.run执行watcher的get方法，从而重新渲染
+            const value = this.get()
+            
+            // ...
+            
+        }
+    }
+    
+    // ...
+    
+}
+```
