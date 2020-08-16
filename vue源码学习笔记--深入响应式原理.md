@@ -32,8 +32,8 @@ export function initState (vm: Component) {
 }
 ```
 **initState** 方法主要是对 **props、methods、data、computed 和 wathcer** 等属性做了初始化操作。这里我们重点分析 **props** 和 **data**。  
-**initProp** 和 **initData** 都通过 **proxy** 把每一个值 vm._props.xxx 都代理到 vm.xxx 上，把每一个值 vm._data.xxx 都代理到 vm.xxx 上，
-**initProp** 和 **initData**方法中都最中通过调用 **defineReactive** 方法来定义响应式：
+**initProp** 和 **initData** 都通过 **proxy** 把每一个值 vm._props.xxx 都代理到 vm.xxx 上，把每一个值 vm._data.xxx 都代理到 vm.xxx 上。  
+然后 **initProp** 和 **initData**方法中都最中通过调用 **defineReactive** 方法来定义响应式：
 ```
 export function defineReactive (
   obj: Object,
@@ -101,5 +101,45 @@ export function defineReactive (
   })
 }
 ```
+#### 三.Dep
+```
+export default class Dep {
+  static target: ?Watcher; // 静态属性 target，这是一个全局唯一 Watcher，这是一个非常巧妙的设计，因为在同一时间只能有一个全局的 Watcher 被计算
+  id: number; // 每个dep实例的id自增
+  subs: Array<Watcher>; // 自身属性 subs 也是 Watcher 的数组
 
+  constructor () {
+    this.id = uid++ // 初始化id
+    this.subs = [] // 初始化subs
+  }
 
+  addSub (sub: Watcher) {
+    this.subs.push(sub) // 通过watcher的dep.addSub(this)方法调用，在dep.subs中添加一个watcher对象
+  }
+
+  removeSub (sub: Watcher) {
+    remove(this.subs, sub)
+  }
+  // 在Object.defineProperty的get中调用的方法，用来收集依赖
+  depend () {
+    if (Dep.target) {
+      Dep.target.addDep(this)
+    }
+  }
+  // 在Object.defineProperty的set中调用的方法，用来派发更新
+  notify () {
+    // stabilize the subscriber list first
+    const subs = this.subs.slice()
+    if (process.env.NODE_ENV !== 'production' && !config.async) {
+      // subs aren't sorted in scheduler if not running async
+      // we need to sort them now to make sure they fire in correct
+      // order
+      subs.sort((a, b) => a.id - b.id)
+    }
+    for (let i = 0, l = subs.length; i < l; i++) {
+      // 调用watcher的update方法
+      subs[i].update()
+    }
+  }
+}
+```
