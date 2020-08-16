@@ -1,10 +1,10 @@
 ### vue源码学习笔记--深入响应式原理
 #### 先总结：
-+ vue响应式原理是利用Object.defineProperty(obj, key, descriptor)的get和set实现的，在get中实现收集依赖，set中实现派发更新。  
-+ vue的响应式原理在源码中依赖于Watcher，Dep，Observer类，其中Watcher又分为渲染Watcher，user Watcher，内部Watcher，这里我们主要看渲染Watcher。  
-+ Watcher是订阅者，存储依赖，等set的时候再通过notify触发watcher的get，调用update更新dom。  
-+ Dep是对Watcher的管理，Dep的实例dep，dep.subs数组中存放的是Watchers订阅者，dep.id是每个属性的Dep的id，Dep脱离Watcher单独存在没有意义。  
-+ Observer类定义Object.defineProperty的地方。  
++ vue响应式原理是利用 **Object.defineProperty(obj, key, descriptor)** 的 **get** 和 **set** 实现的，在 **get** 中实现收集依赖，**set** 中实现派发更新。  
++ vue的响应式原理在源码中依赖于 **Watcher，Dep，Observer** 类，其中 **Watcher** 又分为渲染 **Watcher，user Watcher** ，内部 **Watcher** ，这里我们主要看渲染 **Watcher** 。  
++ **Watcher** 是订阅者，存储依赖，等 **set** 的时候再通过 **notify** 触发 **watcher** 的 **get** ，调用 **update** 更新 **dom**。  
++ **Dep** 是对 **Watcher** 的管理，**Dep** 的实例 **dep** ，**dep.subs** 数组中存放的是 **Watchers** 订阅者，**dep.id** 是每个属性的 **Dep** 的id，**Dep** 脱离 **Watcher** 单独存在没有意义。 
++ **Observer** 类定义 **Object.defineProperty** 的地方。  
 #### 一.响应式对象
 ```
 Object.defineProperty(obj, prop, descriptor)
