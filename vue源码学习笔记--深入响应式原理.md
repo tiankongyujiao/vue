@@ -32,6 +32,74 @@ export function initState (vm: Component) {
 }
 ```
 **initState** 方法主要是对 **props、methods、data、computed 和 wathcer** 等属性做了初始化操作。这里我们重点分析 **props** 和 **data**。  
+**initProp** 和 **initData** 都通过 **proxy** 把每一个值 vm._props.xxx 都代理到 vm.xxx 上，把每一个值 vm._data.xxx 都代理到 vm.xxx 上，
+**initProp** 和 **initData**方法中都最中通过调用 **defineReactive** 方法来定义响应式：
+```
+export function defineReactive (
+  obj: Object,
+  key: string,
+  val: any,
+  customSetter?: ?Function,
+  shallow?: boolean
+) {
+  // 每个属性的dep实例，在闭包返回内的dep
+  const dep = new Dep()
 
+  const property = Object.getOwnPropertyDescriptor(obj, key)
+  if (property && property.configurable === false) {
+    return
+  }
+
+  // cater for pre-defined getter/setters
+  const getter = property && property.get
+  const setter = property && property.set
+  if ((!getter || setter) && arguments.length === 2) {
+    val = obj[key]
+  }
+  
+  // 如果val也是一个对象，则继续调用observe方法，返回val的Observer对象childOb
+  let childOb = !shallow && observe(val)
+  Object.defineProperty(obj, key, {
+    enumerable: true,
+    configurable: true,
+    get: function reactiveGetter () {
+      const value = getter ? getter.call(obj) : val
+      if (Dep.target) {
+        // 收集依赖调用方法
+        dep.depend()
+        if (childOb) {
+          childOb.dep.depend()
+          if (Array.isArray(value)) {
+            dependArray(value)
+          }
+        }
+      }
+      return value
+    },
+    set: function reactiveSetter (newVal) {
+      const value = getter ? getter.call(obj) : val
+      /* eslint-disable no-self-compare */
+      if (newVal === value || (newVal !== newVal && value !== value)) {
+        return
+      }
+      /* eslint-enable no-self-compare */
+      if (process.env.NODE_ENV !== 'production' && customSetter) {
+        customSetter()
+      }
+      // #7981: for accessor properties without setter
+      if (getter && !setter) return
+      if (setter) {
+        setter.call(obj, newVal)
+      } else {
+        val = newVal
+      }
+      // 如果修改的结果newVal是一个对象，则调用observe再次对该对象做响应式处理，返回childOb这个Observer对象
+      childOb = !shallow && observe(newVal)
+      // 派发更新调用方法
+      dep.notify()
+    }
+  })
+}
+```
 
 
