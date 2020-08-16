@@ -34,6 +34,7 @@ export function initState (vm: Component) {
 **initState** 方法主要是对 **props、methods、data、computed 和 wathcer** 等属性做了初始化操作。这里我们重点分析 **props** 和 **data**。  
 **initProp** 和 **initData** 都通过 **proxy** 把每一个值 vm._props.xxx 都代理到 vm.xxx 上，把每一个值 vm._data.xxx 都代理到 vm.xxx 上。  
 然后 **initProp** 和 **initData**方法中都最中通过调用 **defineReactive** 方法来定义响应式：
+#### Observer
 ```
 export function defineReactive (
   obj: Object,
@@ -163,7 +164,7 @@ export default class Watcher {
         
         // ...
         
-        // 新旧deps
+        // 新旧deps定义
         this.deps = []
         this.newDeps = []
         this.depIds = new Set()
@@ -272,6 +273,7 @@ export default class Watcher {
      * Scheduler job interface.
      * Will be called by the scheduler.
      */
+    // 在 src/core/observer/scheduler.js中定义的flushSchedulerQueue中调用该方法，或者在上面的update方法中直接调用this.run()调用该方法，完成dom更新。
     run() {
         if (this.active) {
             // 派发更新的时候调用watcher.run执行watcher的get方法，从而重新渲染
@@ -284,5 +286,76 @@ export default class Watcher {
     
     // ...
     
+}
+```
+#### 五.queueWatcher方法
+```
+export function queueWatcher (watcher: Watcher) {
+  const id = watcher.id
+  if (has[id] == null) {
+    has[id] = true
+    if (!flushing) {
+      // 把当前watcher push进queue数组中
+      queue.push(watcher)
+    } else {
+      // if already flushing, splice the watcher based on its id
+      // if already past its id, it will be run next immediately.
+      let i = queue.length - 1
+      while (i > index && queue[i].id > watcher.id) {
+        i--
+      }
+      queue.splice(i + 1, 0, watcher)
+    }
+    // queue the flush
+    if (!waiting) {
+      waiting = true
+
+      if (process.env.NODE_ENV !== 'production' && !config.async) {
+        flushSchedulerQueue()
+        return
+      }
+      // nextTick异步执行flushSchedulerQueue方法
+      nextTick(flushSchedulerQueue)
+    }
+  }
+}
+```
+#### 六.flushSchedulerQueue
+```
+function flushSchedulerQueue () {
+  currentFlushTimestamp = getNow()
+  flushing = true
+  let watcher, id
+
+  // Sort queue before flush.
+  // This ensures that:
+  // 1. Components are updated from parent to child. (because parent is always
+  //    created before the child)
+  // 2. A component's user watchers are run before its render watcher (because
+  //    user watchers are created before the render watcher)
+  // 3. If a component is destroyed during a parent component's watcher run,
+  //    its watchers can be skipped.
+  // 重排watcher
+  queue.sort((a, b) => a.id - b.id)
+
+  // do not cache length because more watchers might be pushed
+  // as we run existing watchers
+  for (index = 0; index < queue.length; index++) {
+    watcher = queue[index]
+    // 如果有before则执行回调，渲染watcher的这个函数是执行了beforeUpdate钩子，
+    if (watcher.before) {
+      watcher.before()
+    }
+    id = watcher.id
+    has[id] = null
+    watcher.run() // 这里调用watcher.run从而完成dom的更新
+    // in dev build, check and stop circular updates.
+    
+    // ...
+    
+  }
+
+  // ...
+  
 }
 ```
