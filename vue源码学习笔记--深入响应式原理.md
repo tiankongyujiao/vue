@@ -359,6 +359,122 @@ function flushSchedulerQueue () {
   
 }
 ```
+#### 七.nextTick
+数据的更新并不会立即映射到dom上，例如：
+```
+<template>
+  <div id="test">{{ msg }}</div>
+</template>
+<script>
+export default {
+  data() {
+    return {
+      msg: 'hello'
+    }
+  },
+  mounted() {
+    this.msg = 'vue';
+    console.lo(document.getElementById('test').innerText) // 这时候打印的仍是hello
+  }
+}
+</script>
+```
+这是因为vue源码在派发更新queueWatcher的时候使用了nextTick方法，这个方法定义在‘src/core/util/next-tick.js’中：  
+```
+/* @flow */
+/* globals MutationObserver */
+
+import { noop } from 'shared/util'
+import { handleError } from './error'
+import { isIE, isIOS, isNative } from './env'
+
+export let isUsingMicroTask = false
+
+const callbacks = []
+let pending = false
+
+function flushCallbacks () {
+  pending = false
+  const copies = callbacks.slice(0)
+  callbacks.length = 0
+  for (let i = 0; i < copies.length; i++) {
+    copies[i]()
+  }
+}
+
+let timerFunc
+
+if (typeof Promise !== 'undefined' && isNative(Promise)) {
+  const p = Promise.resolve()
+  timerFunc = () => {
+    p.then(flushCallbacks)
+    if (isIOS) setTimeout(noop)
+  }
+  isUsingMicroTask = true
+} else if (!isIE && typeof MutationObserver !== 'undefined' && (
+  isNative(MutationObserver) ||
+  // PhantomJS and iOS 7.x
+  MutationObserver.toString() === '[object MutationObserverConstructor]'
+)) {
+  // Use MutationObserver where native Promise is not available,
+  // e.g. PhantomJS, iOS7, Android 4.4
+  // (#6466 MutationObserver is unreliable in IE11)
+  let counter = 1
+  const observer = new MutationObserver(flushCallbacks)
+  const textNode = document.createTextNode(String(counter))
+  observer.observe(textNode, {
+    characterData: true
+  })
+  timerFunc = () => {
+    counter = (counter + 1) % 2
+    textNode.data = String(counter)
+  }
+  isUsingMicroTask = true
+} else if (typeof setImmediate !== 'undefined' && isNative(setImmediate)) {
+  // Fallback to setImmediate.
+  // Technically it leverages the (macro) task queue,
+  // but it is still a better choice than setTimeout.
+  timerFunc = () => {
+    setImmediate(flushCallbacks)
+  }
+} else {
+  // Fallback to setTimeout.
+  timerFunc = () => {
+    setTimeout(flushCallbacks, 0)
+  }
+}
+
+export function nextTick (cb?: Function, ctx?: Object) {
+  let _resolve
+  callbacks.push(() => {
+    if (cb) {
+      try {
+        cb.call(ctx)
+      } catch (e) {
+        handleError(e, ctx, 'nextTick')
+      }
+    } else if (_resolve) {
+      _resolve(ctx)
+    }
+  })
+  if (!pending) {
+    pending = true
+    timerFunc()
+  }
+  // $flow-disable-line
+  if (!cb && typeof Promise !== 'undefined') {
+    return new Promise(resolve => {
+      _resolve = resolve
+    })
+  }
+}
+
+```
+由于js单线程机制，js的运行遵循着js事件循环机制：  
+> 1. 所有同步任务都在主线程上执行，形成一个执行栈（execution context stack）。
+2. 主线程之外，还存在一个"任务队列"（task queue）。只要异步任务有了运行结果，就在"任务队列"之中放置一个事件。
+3. 一旦"执行栈"中的所有同步任务执行完毕，系统就会读取"任务队列"，看看里面有哪些事件。那些对应的异步任务，于是结束等待状态，进入执行栈，开始执行。
+4. 主线程不断重复上面的第三步。
 #### 再次总结：
 >收集依赖的目的是为了当这些响应式数据发生变化，触发它们的 **setter** 的时候，能知道应该通知哪些订阅者(watcher)去做相应的逻辑处理，我们把这个过程叫派发更新
 
