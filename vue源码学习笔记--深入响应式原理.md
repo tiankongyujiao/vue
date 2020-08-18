@@ -486,4 +486,4 @@ export function nextTick (cb?: Function, ctx?: Object) {
 
 > 派发更新的过程实际上就是当数据发生变化的时候，触发 **setter** 逻辑，把在依赖过程中订阅的所有观察者，也就是 **watcher** ，都触发它们的 **update** 过程，这个过程又利用了队列做了进一步优化，在 **nextTick** 后执行所有 **watcher** 的 **run**，最后执行它们的回调函数。
 
-> **nextTick** 利用异步任务和waiting字段，多次修改只做一次渲染，提高了性能。
+> **nextTick** 利用异步任务和waiting字段，**一次事件循环中** 多次修改只做一次渲染，提高了性能。
