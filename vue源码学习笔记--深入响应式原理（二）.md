@@ -69,3 +69,89 @@ Object.defineProperty(obj, key, {
     }
   })
 ```
+##### 数组的特殊性
+1. 直接利用索引修改数组无效，例如：**vm.items[indexOfItem] = newValue**，可以改为使用：**Vue.set(example1.items, indexOfItem, newValue)**
+2. 直接修改数组长度无效，例如：**vm.items.length = newLength**，可以改为使用：**target.splice(key, 1, val)** 。
+上面的splice为啥会使数组变为响应式呢，这就是我们上面提到的，vue源码对数组的 **'push','pop', 'shift','unshift','splice','sort','reverse'** 做了一层包装，变异了数组的方法，在变异的方法内部调用了 **ob.dep.notify()** 方法，从而触发dom更新的，看下具体代码：
+```
+export class Observer {
+  value: any;
+  dep: Dep;
+  vmCount: number; // number of vms that have this object as root $data
+
+  constructor (value: any) {
+    this.value = value
+    this.dep = new Dep()
+    this.vmCount = 0
+    def(value, '__ob__', this)
+    if (Array.isArray(value)) {
+      if (hasProto) {
+        // 一般都会走到这个逻辑
+        protoAugment(value, arrayMethods)
+      } else {
+        copyAugment(value, arrayMethods, arrayKeys)
+      }
+      this.observeArray(value)
+    } else {
+      this.walk(value)
+    }
+  }
+  // ...
+}
+
+```
+然后看下protoAugment方法：
+```
+function protoAugment (target, src: Object) {
+  /* eslint-disable no-proto */
+  target.__proto__ = src
+  /* eslint-enable no-proto */
+}
+```
+这里就是把arr赋值给数组的原型，这个arr就是调用 **protoAugment** 传入的arrMethods，这个方法包括对数组的变异包装都是定义在src/core/observer/array.js中：
+```
+import { def } from '../util/index'
+
+const arrayProto = Array.prototype
+export const arrayMethods = Object.create(arrayProto) // arrayMethods 首先继承了 Array
+
+const methodsToPatch = [
+  'push',
+  'pop',
+  'shift',
+  'unshift',
+  'splice',
+  'sort',
+  'reverse'
+]
+
+/**
+ * Intercept mutating methods and emit events
+ */
+// 然后对数组中所有能改变数组自身的方法，如 push、pop 等这些方法进行重写
+methodsToPatch.forEach(function (method) {
+  // cache original method
+  const original = arrayProto[method]
+  def(arrayMethods, method, function mutator (...args) {
+    const result = original.apply(this, args)
+    const ob = this.__ob__
+    console.log(ob, '__ob__')
+    let inserted
+    switch (method) {
+      case 'push':
+      case 'unshift':
+        inserted = args
+        break
+      case 'splice':
+        inserted = args.slice(2)
+        break
+    }
+    if (inserted) ob.observeArray(inserted)
+    // notify change
+    ob.dep.notify()
+    return result
+  })
+})
+
+```
+> 重写后的方法会先执行它们本身原有的逻辑，并对能增加数组长度的 3 个方法 **push、unshift、splice** 方法做了判断，获取到插入的值，然后把新添加的值变成一个响应式对象，并且再调用 **ob.dep.notify()** 手动触发依赖通知，这就很好地解释了之前的示例中调用 **vm.items.splice(newLength)** 方法可以检测到变化。
