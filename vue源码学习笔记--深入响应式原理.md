@@ -482,6 +482,8 @@ export function nextTick (cb?: Function, ctx?: Object) {
 **nextTick** 就是利用了异步任务来执行，并且 **queueWatcher** 执行异步任务nextTick是waiting为false的时候才执行，且执行前把waiting赋值为true，这样在dom渲染之前watcher的flushSchedulerQueue只执行一次，避免了 **一次事件循环中** 多次修改数据多次渲染，浪费性能。
 
 #### 再次总结：
->收集依赖的目的是为了当这些响应式数据发生变化，触发它们的 **setter** 的时候，能知道应该通知哪些订阅者(watcher)去做相应的逻辑处理，我们把这个过程叫派发更新
+> 收集依赖的目的是为了当这些响应式数据发生变化，触发它们的 **setter** 的时候，能知道应该通知哪些订阅者(watcher)去做相应的逻辑处理，我们把这个过程叫派发更新
 
 > 派发更新的过程实际上就是当数据发生变化的时候，触发 **setter** 逻辑，把在依赖过程中订阅的所有观察者，也就是 **watcher** ，都触发它们的 **update** 过程，这个过程又利用了队列做了进一步优化，在 **nextTick** 后执行所有 **watcher** 的 **run**，最后执行它们的回调函数。
+
+> **nextTick** 利用异步任务和waiting字段，多次修改只做一次渲染，提高了性能。
