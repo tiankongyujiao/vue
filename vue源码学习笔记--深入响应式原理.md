@@ -398,12 +398,13 @@ function flushCallbacks () {
   const copies = callbacks.slice(0)
   callbacks.length = 0
   for (let i = 0; i < copies.length; i++) {
-    copies[i]()
+    copies[i]() // 调用 flushSchedulerQueue
   }
 }
 
 let timerFunc
 
+// 定义timerFunc异步执行的函数，执行flushCallbacks， flushSchedulerQueue 在 flushCallbacks 中被调用
 if (typeof Promise !== 'undefined' && isNative(Promise)) {
   const p = Promise.resolve()
   timerFunc = () => {
@@ -446,6 +447,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
 
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
+  // 先放入callbacks数组中
   callbacks.push(() => {
     if (cb) {
       try {
@@ -459,6 +461,7 @@ export function nextTick (cb?: Function, ctx?: Object) {
   })
   if (!pending) {
     pending = true
+    // 执行函数，timerFunc中定义了异步任务，调用callbacks数组中的 flushSchedulerQueue 函数更新
     timerFunc()
   }
   // $flow-disable-line
@@ -476,7 +479,7 @@ export function nextTick (cb?: Function, ctx?: Object) {
 3.一旦"执行栈"中的所有同步任务执行完毕，系统就会读取"任务队列"，看看里面有哪些事件。那些对应的异步任务，于是结束等待状态，进入执行栈，开始执行。  
 4.主线程不断重复上面的第三步。
 
-nextTick就是利用了异步任务来执行，并且 **queueWatcher** 执行异步任务nextTick是waiting为false的时候才执行，且执行前把waiting赋值为true，这样在dom渲染之前watcher的flushSchedulerQueue只执行一次，避免了多次修改多次渲染，浪费性能。
+**nextTick** 就是利用了异步任务来执行，并且 **queueWatcher** 执行异步任务nextTick是waiting为false的时候才执行，且执行前把waiting赋值为true，这样在dom渲染之前watcher的flushSchedulerQueue只执行一次，避免了 **一次事件循环中** 多次修改数据多次渲染，浪费性能。
 
 #### 再次总结：
 >收集依赖的目的是为了当这些响应式数据发生变化，触发它们的 **setter** 的时候，能知道应该通知哪些订阅者(watcher)去做相应的逻辑处理，我们把这个过程叫派发更新
