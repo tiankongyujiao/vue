@@ -72,7 +72,7 @@ Object.defineProperty(obj, key, {
 ##### 数组的特殊性
 1. 直接利用索引修改数组无效，例如：**vm.items[indexOfItem] = newValue**，可以改为使用：**Vue.set(example1.items, indexOfItem, newValue)**
 2. 直接修改数组长度无效，例如：**vm.items.length = newLength**，可以改为使用：**target.splice(key, 1, val)** 。
-上面的splice为啥会使数组变为响应式呢，这就是我们上面提到的，vue源码对数组的 **'push','pop', 'shift','unshift','splice','sort','reverse'** 做了一层包装，变异了数组的方法，在变异的方法内部调用了 **ob.dep.notify()** 方法，从而触发dom更新的，看下具体代码：
+上面的splice为啥会使数组变为响应式呢，这就是我们上面提到的，vue源码对数组的 **'push','pop', 'shift','unshift','splice','sort','reverse'** 做了重写，变异了数组的方法，在变异的方法内部调用了 **ob.dep.notify()** 方法，从而触发dom更新的，看下具体代码：
 ```
 export class Observer {
   value: any;
@@ -108,7 +108,7 @@ function protoAugment (target, src: Object) {
   /* eslint-enable no-proto */
 }
 ```
-这里就是把arr赋值给数组的原型，这个arr就是调用 **protoAugment** 传入的arrMethods，这个方法包括对数组的变异包装都是定义在src/core/observer/array.js中：
+这里就是把arr赋值给数组的原型，这个arr就是调用 **protoAugment** 传入的arrMethods，这个方法和对数组的重写都是定义在src/core/observer/array.js中：
 ```
 import { def } from '../util/index'
 
