@@ -305,3 +305,5 @@ evaluate () {
   this.dirty = false
 }
 ```
+这个方法调用了 **this.get** ，在get中调用了 **value = this.getter.call(vm, vm)** ，**this.getter** 就是我们自己定义的计算属性的get方法，执行计算，执行计算的过程冲又会触发依赖属性的get。  
+上面computedGetter中后面又调用了 **watcher.depend** 方法，这个方法的作用就是
