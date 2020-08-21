@@ -305,6 +305,6 @@ evaluate () {
   this.dirty = false
 }
 ```
-这个方法调用了 **this.get** ，在get中调用了 **value = this.getter.call(vm, vm)** ，**this.getter** 就是我们自己定义的计算属性的get方法，执行计算得到计算属性的值，执行计算的过程冲又会触发依赖属性的get。  
-到这里计算属性的get就分析完了，一般情况是没有set的，下面是set的情况：  
-上面 **computedGetter** 中后面又调用了 **watcher.depend** 方法，此时的 **Dep.target** 是组件的渲染 **watcher** ，而 **watcher** 是当前访问的计算属性的 **computed watcher** 。  **watcher.depend** 的作用是往当前渲染 **watcher** 的 **newDeps** 和 **newDepIds** 上添加当前计算属性所依赖的 **data** 属性的 **dep**，并且在当前计算属性所依赖的 **data** 属性的 **dep** 上添加渲染 **watcher** ，这样在 **set** 的时候估计就能找到当前的 **watcher** 完成更新（没有深入研究）。
++ 这个方法调用了 **this.get** ，在get中调用了 **value = this.getter.call(vm, vm)** ，**this.getter** 就是我们自己定义的计算属性的get方法，执行计算得到计算属性的值，执行计算的过程冲又会触发依赖属性的get。  
++ 到这里计算属性的get就分析完了，一般情况是没有set的，下面是set的情况：  
++ 上面 **computedGetter** 中后面又调用了 **watcher.depend** 方法，此时的 **Dep.target** 是组件的渲染 **watcher** ，而 **watcher** 是当前访问的计算属性的 **computed watcher** 。  **watcher.depend** 的作用是往当前渲染 **watcher** 的 **newDeps** 和 **newDepIds** 上添加当前计算属性所依赖的 **data** 属性的 **dep**，并且在当前计算属性所依赖的 **data** 属性的 **dep** 上添加渲染 **watcher** ，这样在 **set** 的时候估计就能找到当前的 **watcher** 完成更新（没有深入研究）。
