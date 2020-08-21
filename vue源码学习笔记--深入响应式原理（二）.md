@@ -155,3 +155,153 @@ methodsToPatch.forEach(function (method) {
 
 ```
 > 重写后的方法会先执行它们本身原有的逻辑，并对能增加数组长度的 3 个方法 **push、unshift、splice** 方法做了判断，获取到插入的值，然后把新添加的值变成一个响应式对象，并且再调用 **ob.dep.notify()** 手动触发依赖通知，这就很好地解释了之前的示例中调用 **vm.items.splice(newLength)** 方法可以检测到变化。
+
+#### 二.computed
+vue计算属性computed的源码分析：  
+vue计算属性computed的初始化也是在instate（instate在vue的_init方法中调用的，vue的_init方法又是在Vue中调用的，当new一个vue实例时调用）中，initState有这么一句：
+```
+export function initState (vm: Component) {
+  vm._watchers = []
+  const opts = vm.$options
+  if (opts.props) initProps(vm, opts.props)
+  if (opts.methods) initMethods(vm, opts.methods)
+  if (opts.data) {
+    initData(vm)
+  } else {
+    observe(vm._data = {}, true /* asRootData */)
+  }
+  if (opts.computed) initComputed(vm, opts.computed) // 这一句
+  if (opts.watch && opts.watch !== nativeWatch) {
+    initWatch(vm, opts.watch)
+  }
+}
+```
+然后是initComputed方法：
+```
+function initComputed (vm: Component, computed: Object) {
+  // $flow-disable-line
+  // 给当前的vm实例定义了_computedWatchers空对象，使用Object.create(null)创建的对象不具有对象本身具有的原型属性，_computedWatchers在computedGetter（计算属性的get）中使用
+  const watchers = vm._computedWatchers = Object.create(null)
+  // computed properties are just getters during SSR
+  const isSSR = isServerRendering() // web端渲染为false
+  
+  // 遍历computed对象
+  for (const key in computed) {
+    // 拿到键对应的值（通常是一个函数）
+    const userDef = computed[key]
+    // 如果userDef不是一个函数，说明它是一个对象且有get方法，这里取的键对应的键get
+    const getter = typeof userDef === 'function' ? userDef : userDef.get
+    if (process.env.NODE_ENV !== 'production' && getter == null) {
+      warn(
+        `Getter is missing for computed property "${key}".`,
+        vm
+      )
+    }
+    // 如果不是服务端渲染，则 new 一个 Watcher，放入 vm._computedWatchers中，供后面该键属性的get（这个get是使用Object.defineProperty重新定义了一次，我们定义的get在这个重新定义的       // get里面调用）使用
+    if (!isSSR) {
+      // create internal watcher for the computed property.
+      watchers[key] = new Watcher(
+        vm,
+        getter || noop,
+        noop,
+        computedWatcherOptions
+      )
+    }
+
+    // component-defined computed properties are already defined on the
+    // component prototype. We only need to define computed properties defined
+    // at instantiation here.
+    // 如果是组件的话，这个逻辑是进不去的，因为在创建组件实例的时候，即在 Vue.extend 方法中就已经把该键存取到了vue的原型上，所以如果是组件vm，这里不会进入到if中
+    if (!(key in vm)) {
+      defineComputed(vm, key, userDef)
+    } else if (process.env.NODE_ENV !== 'production') {
+      if (key in vm.$data) {
+        warn(`The computed property "${key}" is already defined in data.`, vm)
+      } else if (vm.$options.props && key in vm.$options.props) {
+        warn(`The computed property "${key}" is already defined as a prop.`, vm)
+      }
+    }
+  }
+}
+```
+注释中说到组件的话不会调用defineComputed方法，组件在创建vm的实例的时候就已经通过下面语句定义到了vue的原型里：
+```
+  Vue.extend = function (extendOptions: Object): Function {
+    // ...
+    if (Sub.options.computed) {
+      initComputed(Sub)
+    }
+    // ...
+  }
+```
+在调用 **Vue.extend** 创建组件vm的时候，如果组件有 **computed** 属性，就通过 **initComputed()** 方法定义了该计算属性，注意这里的 **initComputed** 不是 **src/core/instance/state.js** 中的 **initComputed**, 是 **src/core/global-api/extend.js** 中的:
+```
+function initComputed (Comp) {
+  const computed = Comp.options.computed
+  for (const key in computed) {
+    defineComputed(Comp.prototype, key, computed[key]); // 注意这里传入的是当前vm的原型，就是把组件的computed的属性都定义到了vm的原型上面
+  }
+}
+
+```
+在这里遍历了computed对象里的所有属性，并调用了 **defineComputed**，这个方法定义在 **src/core/instance/state.js** 中：
+```
+export function defineComputed (
+  target: any, // vm原型
+  key: string, // computed 的键
+  userDef: Object | Function // computed 的键值
+) {
+  const shouldCache = !isServerRendering()
+  // 通常来说userDef都是一个函数，因为computed一般没有set，这里只看这种情况
+  if (typeof userDef === 'function') {
+    // 这里会调用 createComputedGetter 方法，因为不是服务端渲染，shouldCache为true
+    sharedPropertyDefinition.get = shouldCache
+      ? createComputedGetter(key)
+      : createGetterInvoker(userDef)
+    sharedPropertyDefinition.set = noop
+  } else {
+    sharedPropertyDefinition.get = userDef.get
+      ? shouldCache && userDef.cache !== false
+        ? createComputedGetter(key)
+        : createGetterInvoker(userDef.get)
+      : noop
+    sharedPropertyDefinition.set = userDef.set || noop
+  }
+  if (process.env.NODE_ENV !== 'production' &&
+      sharedPropertyDefinition.set === noop) {
+    sharedPropertyDefinition.set = function () {
+      warn(
+        `Computed property "${key}" was assigned to but it has no setter.`,
+        this
+      )
+    }
+  }
+  // 通过 Object.defineProperty把键和包装后的get定义到vm原型上
+  Object.defineProperty(target, key, sharedPropertyDefinition)
+}
+```
+下面看下 **createComputedGetter** 方法：
+```
+function createComputedGetter (key) {
+  return function computedGetter () {
+    const watcher = this._computedWatchers && this._computedWatchers[key]
+    if (watcher) {
+      if (watcher.dirty) {
+        watcher.evaluate()
+      }
+      if (Dep.target) {
+        watcher.depend()
+      }
+      return watcher.value
+    }
+  }
+}
+```
+这个方法的定义返回了 **computedGetter** ，这个方法就是computed的最终get，当访问computed的属性的时候就会调用 **computedGetter** 方法。  
+在 **computedGetter** 方法里面首先获得了当前vm实例的 **_computedWatchers**，这个上面我们说过就是在computed初始话的时候 **new Watcher** 塞进去的，然后调用 **watcher.evaluate** ：
+```
+evaluate () {
+  this.value = this.get()
+  this.dirty = false
+}
+```
