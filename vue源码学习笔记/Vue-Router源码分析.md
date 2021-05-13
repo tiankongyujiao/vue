@@ -716,12 +716,12 @@ function addRouteRecord (
 ```
 #### 先梳理下流程
 > 1. 开始通过new VueRouter创建了router实例，Vue.use(router)时调用install方法混入了router的breoreCreate和destroyed方法，breforeCreare方法中调用了router.init方法 在创建router实例时，首先通过createMatcher拿到matcher对象，matcher对象包含了match函数和addRoutes函数
-2. 在createMatcher中调用createRouteMap方法建立路由父子关系，且得到了pathList, pathMap, nameMap三个对象
-3. addRoutes方法也是通过createRouteMap添加路由，addRoutes只能添加根级别的路由
-4. 刷新页面时，init方法最后调用了history.transitionTo实现路由跳转
-5. 如果是点击router-link链接是通过history实例的push方法，push方法又调用了history.transitionTo实现路由的跳转
-6. router-view只是一个占位的标签，用来展示匹配到的路由的内容
-7. history.transitionTo方法是history基类中实现的方法，定义在 **src/history/base.js中**
+> 2. 在createMatcher中调用createRouteMap方法建立路由父子关系，且得到了pathList, pathMap, nameMap三个对象
+> 3. addRoutes方法也是通过createRouteMap添加路由，addRoutes只能添加根级别的路由
+> 4. 刷新页面时，init方法最后调用了history.transitionTo实现路由跳转
+> 5. 如果是点击router-link链接是通过history实例的push方法，push方法又调用了history.transitionTo实现路由的跳转
+> 6. router-view只是一个占位的标签，用来展示匹配到的路由的内容
+> 7. history.transitionTo方法是history基类中实现的方法，定义在 **src/history/base.js中**
 
 看下transitionTo方法的定义
 ```
