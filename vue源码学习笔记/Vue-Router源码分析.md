@@ -73,6 +73,7 @@ export function install (Vue) {
   const isDef = v => v !== undefined
   Vue.mixin({
     beforeCreate () {
+      // 由于是在beforeCreate钩子函数中，所以只有Vue的options上才有router，因为此时子组件还没有合并参数，子组件会走else逻辑
       if (isDef(this.$options.router)) {
         // this._routerRoot开始是Vue
         this._routerRoot = this
