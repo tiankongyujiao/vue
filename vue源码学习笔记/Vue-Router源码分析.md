@@ -74,11 +74,16 @@ export function install (Vue) {
   Vue.mixin({
     beforeCreate () {
       if (isDef(this.$options.router)) {
-        this._routerRoot = this // this._routerRoot开始是Vue，对子组件而言，this._routerRoot始终指向的离它最近的传入了 router 对象作为配置而实例化的父实例
-        this._router = this.$options.router // 同过new Vue传入的router实例（new VueRouter创建）
-        this._router.init(this) // 初始化路由，带入Vue参数
-        Vue.util.defineReactive(this, '_route', this._router.history.current) // 把 this._route 变成响应式对象
+        // this._routerRoot开始是Vue
+        this._routerRoot = this
+        // 同过new Vue传入的router实例（new VueRouter创建）
+        this._router = this.$options.router 
+        // 初始化路由，带入Vue参数
+        this._router.init(this)
+        // 把 this._route 变成响应式对象
+        Vue.util.defineReactive(this, '_route', this._router.history.current) 
       } else {
+        对子组件而言，this._routerRoot始终指向的离它最近的传入了 router 对象作为配置而实例化的父实例
         this._routerRoot = (this.$parent && this.$parent._routerRoot) || this
       }
       registerInstance(this, this)
