@@ -101,11 +101,115 @@ export function install (Vue) {
   Object.defineProperty(Vue.prototype, '$route', {
     get () { return this._routerRoot._route }
   })
-
+  
+  // 全局注册RouterView
   Vue.component('RouterView', View)
+  // 全局注册RouterLink
   Vue.component('RouterLink', Link)
-
+  
+  // 路由中钩子函数的合并策略
   const strats = Vue.config.optionMergeStrategies
   strats.beforeRouteEnter = strats.beforeRouteLeave = strats.beforeRouteUpdate = strats.created
+}
+```
+
+#### 初始化路由
+先来看看new VueRouter做了什么工作：
+```
+export default class VueRouter {
+  // ...
+  constructor (options: RouterOptions = {}) {
+    this.app = null
+    this.apps = []
+    this.options = options
+    this.beforeHooks = []
+    this.resolveHooks = []
+    this.afterHooks = []
+    this.matcher = createMatcher(options.routes || [], this)
+
+    let mode = options.mode || 'hash'
+    this.fallback = mode === 'history' && !supportsPushState && options.fallback !== false
+    if (this.fallback) {
+      mode = 'hash'
+    }
+    if (!inBrowser) {
+      mode = 'abstract'
+    }
+    this.mode = mode
+
+    switch (mode) {
+      case 'history':
+        // 创建history模式下的history实例
+        this.history = new HTML5History(this, options.base)
+        break
+      case 'hash':
+        // 创建hash模式下的history实例
+        this.history = new HashHistory(this, options.base, this.fallback)
+        break
+      case 'abstract':
+        // 非浏览器下的history实例
+        this.history = new AbstractHistory(this, options.base)
+        break
+      default:
+        if (process.env.NODE_ENV !== 'production') {
+          assert(false, `invalid mode: ${mode}`)
+        }
+    }
+  }
+  // ...
+}
+```
+在install中执行注入的beforeCreate钩子中执行的 **this._router.init(this)** 是VueRouter中定义的init函数：
+```
+export default class VueRouter {
+  // ...
+  apps: Array<any>;
+  // ...
+  init (app: any) {
+    process.env.NODE_ENV !== 'production' && assert(
+      install.installed,
+      `not installed. Make sure to call \`Vue.use(VueRouter)\` ` +
+      `before creating root instance.`
+    )
+    // this.apps 保存持有 $options.router 属性的 Vue 实例，实际我们使用的时候只会new一个次VueRouter，所以通常this.apps的长度是1，但是vue支持多个
+    this.apps.push(app)
+
+    if (this.app) {
+      return
+    }
+    
+    // 这个app是根Vue实例
+    this.app = app
+    
+    // 在new VueRouter的时候根据不同模式（history,hash,abstract）实例化的history实例
+    const history = this.history
+
+    if (history instanceof HTML5History) { // history
+      history.transitionTo(history.getCurrentLocation())
+    } else if (history instanceof HashHistory) { // hash
+      const setupHashListener = () => {
+        history.setupListeners()
+      }
+      history.transitionTo(
+        history.getCurrentLocation(),
+        setupHashListener,
+        setupHashListener
+      )
+    }
+
+    history.listen(route => {
+      this.apps.forEach((app) => {
+        app._route = route
+      })
+    })
+  }
+  // ...
+}
+```
+##### history.transitionTo在history的基类中，代码在 **src/history/base.js**
+```
+transitionTo (location: RawLocation, onComplete?: Function, onAbort?: Function) {
+  const route = this.router.match(location, this.current)
+  // ...
 }
 ```
