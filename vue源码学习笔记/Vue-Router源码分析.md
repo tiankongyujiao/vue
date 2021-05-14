@@ -992,7 +992,7 @@ confirmTransition (route: Route, onComplete: Function, onAbort?: Function) {
 > confirmTransition 整个过程就是先判断路由是否切换，如果没有切换直接执行abort函数，如果切换了，则调用resolveQueue得到失活，重用，新激活的路由，根据这些路由组件了一个queue数组，数组有序的包含了 **①失活组件的离开钩子，②全局的 beforeEach 守卫，③重用的组件里调用 beforeRouteUpdate 守卫，④激活的路由配置里调用 beforeEnter 钩子，⑤解析异步路由组件** 这几项，然后执行runQueue把queue当做参数传入，runQueue借助一个step依次执行了queue的钩子，其中异步组件钩子的回调函数最后执行，借助了promise的then特性，最后调用了ensureUrl方法确保跳转的是当前的路由链接。
 
 ### router-view
-> router-view 是一个函数式组件，它渲染什么内容取决于当前路径。由于我们把根 Vue 实例的 _route 属性定义成响应式的，我们在每个 <router-view> 执行 render 函数的时候，都会访问 parent.$route，如我们之前分析会访问 this._routerRoot._route，触发了它的 getter，相当于 <router-view> 对它有依赖，然后再执行完 transitionTo 后，修改 app._route 的时候，又触发了setter，因此会通知 <router-view> 的渲染 watcher 更新，重新渲染组件。
+> router-view 是一个函数式组件，它渲染什么内容取决于当前路径。由于我们把 **根 Vue 实例的 _route 属性定义成响应式** 的，我们在每个 <router-view> 执行 render 函数的时候，都会访问 parent.$route，如我们之前分析会访问 this._routerRoot._route，触发了它的 getter，相当于 <router-view> 对它有依赖，然后再执行完 transitionTo 后，修改 app._route 的时候，又触发了setter，因此会通知 <router-view> 的渲染 watcher 更新，重新渲染组件。
 
 ### router-link
 > router-link也是一个函数式组件，有自己的render函数，它和router-view一样都是在init时定义成了全局组件。在 HTML5 history 模式下，router-link 会守卫点击事件，让浏览器不再重新加载页面。
