@@ -879,6 +879,7 @@ export function createRoute (
 confirmTransition (route: Route, onComplete: Function, onAbort?: Function) {
   const current = this.current
   this.pending = route
+  // 终止函数
   const abort = err => {
     // changed after adding errors with
     // https://github.com/vuejs/vue-router/pull/3047 before that change,
@@ -893,10 +894,12 @@ confirmTransition (route: Route, onComplete: Function, onAbort?: Function) {
         console.error(err)
       }
     }
+    // 调用终止回调
     onAbort && onAbort(err)
   }
   const lastRouteIndex = route.matched.length - 1
   const lastCurrentIndex = current.matched.length - 1
+  // 如果route 和 current 是相同路径的话，直接调用 this.ensureUrl 和 abort
   if (
     isSameRoute(route, current) &&
     // in the case the route map has been dynamically appended to
@@ -907,29 +910,35 @@ confirmTransition (route: Route, onComplete: Function, onAbort?: Function) {
     return abort(createNavigationDuplicatedError(current, route))
   }
 
-  const { updated, deactivated, activated } = resolveQueue(
+  // 通过resolveQueue拿到updated, deactivated, activated：其中this.current.matched和route.matched是当前路由和要跳转到的路由
+  // updated：当前路由和要跳转的路由从0开始相同的部分
+  // deactivated: 当前路由从不同索引（当前路由和要跳转到的路由从头开始第一个不同的索引）到结束
+  // activate：要跳转到的路由从不同索引（当前路由和要跳转到的路由从头开始第一个不同的索引）到结束
+  const { updated, deactivated, activate } = resolveQueue(
     this.current.matched,
     route.matched
   )
 
+  // 执行一系列的钩子函数
   const queue: Array<?NavigationGuard> = [].concat(
-    // in-component leave guards
+    // 失活的组件调用离开守卫
     extractLeaveGuards(deactivated),
-    // global before hooks
+    // 调用全局的 beforeEach 守卫
     this.router.beforeHooks,
-    // in-component update hooks
+    // 重用的组件里调用 beforeRouteUpdate 守卫
     extractUpdateHooks(updated),
-    // in-config enter guards
+    // 激活的路由配置里调用 beforeEnter
     activated.map(m => m.beforeEnter),
-    // async components
+    // 解析异步路由组件
     resolveAsyncComponents(activated)
   )
-
+  // 迭代器，用来执行钩子的
   const iterator = (hook: NavigationGuard, next) => {
     if (this.pending !== route) {
       return abort(createNavigationCancelledError(current, route))
     }
     try {
+      // hook就是queue里面的钩子
       hook(route, current, (to: any) => {
         if (to === false) {
           // next(false) -> abort navigation, ensure current URL
@@ -959,7 +968,7 @@ confirmTransition (route: Route, onComplete: Function, onAbort?: Function) {
       abort(e)
     }
   }
-
+  // 执行钩子队列
   runQueue(queue, iterator, () => {
     // wait until async components are resolved before
     // extracting in-component enter guards
@@ -980,3 +989,15 @@ confirmTransition (route: Route, onComplete: Function, onAbort?: Function) {
   })
 }
 ```
+> confirmTransition 整个过程就是先判断路由是否切换，如果没有切换直接执行abort函数，如果切换了，则调用resolveQueue得到失活，重用，新激活的路由，根据这些路由组件了一个queue数组，数组有序的包含了 **①失活组件的离开钩子，②全局的 beforeEach 守卫，③重用的组件里调用 beforeRouteUpdate 守卫，④激活的路由配置里调用 beforeEnter 钩子，⑤解析异步路由组件** 这几项，然后执行runQueue把queue当做参数传入，runQueue借助一个step依次执行了queue的钩子，其中异步组件钩子的回调函数最后执行，借助了promise的then特性，最后调用了ensureUrl方法确保跳转的是当前的路由链接。
+
+
+
+
+
+
+
+
+
+
+
