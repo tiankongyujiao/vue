@@ -733,7 +733,17 @@ transitionTo (
     let route
     // catch redirect option https://github.com/vuejs/vue-router/issues/3201
     try {
+    
       // 通过this.router.match方法拿到当前要跳转到的路由，实际是调用了this.router.matcher.match方法，这个方法由createMatcher返回（createMatcher还返回了addRoutes方法）
+      // route 包含的属性如下：
+      // name: location.name || (record && record.name),
+      // meta: (record && record.meta) || {},
+      // path: location.path || '/',
+      // hash: location.hash || '',
+      // query,
+      // params: location.params || {},
+      // fullPath: getFullPath(location, stringifyQuery),
+      
       route = this.router.match(location, this.current)
     } catch (e) {
       this.errorCbs.forEach(cb => {
@@ -743,6 +753,7 @@ transitionTo (
       throw e
     }
     const prev = this.current
+    // 真正切换路由的地方
     this.confirmTransition(
       route,
       () => {
@@ -769,7 +780,203 @@ transitionTo (
 ```
 看下match方法：
 ```
+function match (
+    raw: RawLocation,
+    currentRoute?: Route,
+    redirectedFrom?: Location
+  ): Route {
+    const location = normalizeLocation(raw, currentRoute, false, router)
+    const { name } = location
 
+    if (name) {
+      const record = nameMap[name]
+      if (process.env.NODE_ENV !== 'production') {
+        warn(record, `Route with name '${name}' does not exist`)
+      }
+      if (!record) return _createRoute(null, location)
+      const paramNames = record.regex.keys
+        .filter(key => !key.optional)
+        .map(key => key.name)
+
+      if (typeof location.params !== 'object') {
+        location.params = {}
+      }
+
+      if (currentRoute && typeof currentRoute.params === 'object') {
+        for (const key in currentRoute.params) {
+          if (!(key in location.params) && paramNames.indexOf(key) > -1) {
+            location.params[key] = currentRoute.params[key]
+          }
+        }
+      }
+
+      location.path = fillParams(record.path, location.params, `named route "${name}"`)
+      return _createRoute(record, location, redirectedFrom)
+    } else if (location.path) {
+      location.params = {}
+      for (let i = 0; i < pathList.length; i++) {
+        const path = pathList[i]
+        const record = pathMap[path]
+        if (matchRoute(record.regex, location.path, location.params)) {
+          return _createRoute(record, location, redirectedFrom)
+        }
+      }
+    }
+    // no match
+    return _createRoute(null, location)
+  }
 ```
+match方法最后调用了_createRoute函数
+```
+function _createRoute (
+    record: ?RouteRecord,
+    location: Location,
+    redirectedFrom?: Location
+  ): Route {
+  if (record && record.redirect) {
+    return redirect(record, redirectedFrom || location)
+  }
+  if (record && record.matchAs) {
+    return alias(record, location, record.matchAs)
+  }
+  return createRoute(record, location, redirectedFrom, router)
+}
+```
+_createRoute函数又调用了createRoute函数：
+```
+export function createRoute (
+  record: ?RouteRecord,
+  location: Location,
+  redirectedFrom?: ?Location,
+  router?: VueRouter
+): Route {
+  const stringifyQuery = router && router.options.stringifyQuery
 
+  let query: any = location.query || {}
+  try {
+    query = clone(query)
+  } catch (e) {}
+  
+  // ***************************** router.matcher.match最终返回的route对象 *****************************
+  const route: Route = {
+    name: location.name || (record && record.name),
+    meta: (record && record.meta) || {},
+    path: location.path || '/',
+    hash: location.hash || '',
+    query,
+    params: location.params || {},
+    fullPath: getFullPath(location, stringifyQuery),
+    matched: record ? formatMatch(record) : []
+  }
+  if (redirectedFrom) {
+    route.redirectedFrom = getFullPath(redirectedFrom, stringifyQuery)
+  }
+  return Object.freeze(route)
+}
+```
+回到tansitionTo方法里面，最后通过调用this.confirmTransition完成路径切换，由于这个过程可能有一些异步的操作（如异步组件），所以整个 confirmTransition API 设计成带有成功回调函数和失败回调函数。
+```
+confirmTransition (route: Route, onComplete: Function, onAbort?: Function) {
+  const current = this.current
+  this.pending = route
+  const abort = err => {
+    // changed after adding errors with
+    // https://github.com/vuejs/vue-router/pull/3047 before that change,
+    // redirect and aborted navigation would produce an err == null
+    if (!isNavigationFailure(err) && isError(err)) {
+      if (this.errorCbs.length) {
+        this.errorCbs.forEach(cb => {
+          cb(err)
+        })
+      } else {
+        warn(false, 'uncaught error during route navigation:')
+        console.error(err)
+      }
+    }
+    onAbort && onAbort(err)
+  }
+  const lastRouteIndex = route.matched.length - 1
+  const lastCurrentIndex = current.matched.length - 1
+  if (
+    isSameRoute(route, current) &&
+    // in the case the route map has been dynamically appended to
+    lastRouteIndex === lastCurrentIndex &&
+    route.matched[lastRouteIndex] === current.matched[lastCurrentIndex]
+  ) {
+    this.ensureURL()
+    return abort(createNavigationDuplicatedError(current, route))
+  }
 
+  const { updated, deactivated, activated } = resolveQueue(
+    this.current.matched,
+    route.matched
+  )
+
+  const queue: Array<?NavigationGuard> = [].concat(
+    // in-component leave guards
+    extractLeaveGuards(deactivated),
+    // global before hooks
+    this.router.beforeHooks,
+    // in-component update hooks
+    extractUpdateHooks(updated),
+    // in-config enter guards
+    activated.map(m => m.beforeEnter),
+    // async components
+    resolveAsyncComponents(activated)
+  )
+
+  const iterator = (hook: NavigationGuard, next) => {
+    if (this.pending !== route) {
+      return abort(createNavigationCancelledError(current, route))
+    }
+    try {
+      hook(route, current, (to: any) => {
+        if (to === false) {
+          // next(false) -> abort navigation, ensure current URL
+          this.ensureURL(true)
+          abort(createNavigationAbortedError(current, route))
+        } else if (isError(to)) {
+          this.ensureURL(true)
+          abort(to)
+        } else if (
+          typeof to === 'string' ||
+          (typeof to === 'object' &&
+            (typeof to.path === 'string' || typeof to.name === 'string'))
+        ) {
+          // next('/') or next({ path: '/' }) -> redirect
+          abort(createNavigationRedirectedError(current, route))
+          if (typeof to === 'object' && to.replace) {
+            this.replace(to)
+          } else {
+            this.push(to)
+          }
+        } else {
+          // confirm transition and pass on the value
+          next(to)
+        }
+      })
+    } catch (e) {
+      abort(e)
+    }
+  }
+
+  runQueue(queue, iterator, () => {
+    // wait until async components are resolved before
+    // extracting in-component enter guards
+    const enterGuards = extractEnterGuards(activated)
+    const queue = enterGuards.concat(this.router.resolveHooks)
+    runQueue(queue, iterator, () => {
+      if (this.pending !== route) {
+        return abort(createNavigationCancelledError(current, route))
+      }
+      this.pending = null
+      onComplete(route)
+      if (this.router.app) {
+        this.router.app.$nextTick(() => {
+          handleRouteEntered(route)
+        })
+      }
+    })
+  })
+}
+```
