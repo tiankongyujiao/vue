@@ -998,6 +998,9 @@ confirmTransition (route: Route, onComplete: Function, onAbort?: Function) {
 > router-link也是一个函数式组件，有自己的render函数，它和router-view一样都是在init时定义成了全局组件。在 HTML5 history 模式下，router-link 会守卫点击事件，让浏览器不再重新加载页面。
 
 
+> **路由始终会维护当前的线路，路由切换的时候会把当前线路切换到目标线路，切换过程中会执行一系列的导航守卫钩子函数，会更改 url，同样也会渲染对应的组件，切换完毕后会把目标线路更新替换当前线路，这样就会作为下一次的路径切换的依据**
+
+
 
 
 
