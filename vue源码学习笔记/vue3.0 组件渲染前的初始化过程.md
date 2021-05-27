@@ -15,3 +15,4 @@ const mountComponent = (initialVNode, container, anchor, parentComponent, parent
 }
 ```
 其中的创建组件实例和设置组件实例的过程就完成了我们上面所说的模板中的变量和方法与setup返回值建立联系的过程，下面先看下createComponentInstance的实现：
+ 
