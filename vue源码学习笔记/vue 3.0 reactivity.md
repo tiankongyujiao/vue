@@ -75,7 +75,8 @@ const run = (effect: ReactiveEffect) => {
 // 然后执行所有effect的run方法
 effects.forEach(run)
 ```
-这里执行effect方法，进而又执行了副作用函数；当然里面还有一系列的判断重复的过程，比如再次访问响应式变化，依赖收集的过程又执行一遍，这时已有的effect不再重新添加。
+这里执行effect方法，进而又执行了副作用函数；当然里面还有一系列的判断重复的过程，比如再次访问响应式变化，依赖收集的过程又执行一遍，这时已有的effect不再重新添加。  
+响应式变量的dep是存储在一个全局变量targetMap中的，是一个map对象，值中又存储了depsMap对象。
 
 
 
