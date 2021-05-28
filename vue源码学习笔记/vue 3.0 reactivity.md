@@ -37,8 +37,89 @@ export function track(target: object, type: TrackOpTypes, key: unknown) {
 + 如果shouldTrack为false或者activeEffect是undefined，则直接返回，不尽兴依赖收集
 + 下面就从targetMap对象（响应式变量的全局map对象）中获取到当前响应式对象的depsMap（也是一个map对象），depsMap的值中存储了所有的该键值key的dep（set对象），dep中是所有该键值对应的副作用渲染函数。
 + 如果dep中没有当前激活的effect副作用渲染函数，则添加这个副作用渲染函数，且在副作用渲染函数的deps中添加这个dep。
+
 ### trigger触发更新
-在set中主要操作就是触发更新
+在set中主要操作就是触发更新：
+```
+export function trigger(
+  target: object,
+  type: TriggerOpTypes,
+  key?: unknown,
+  newValue?: unknown,
+  oldValue?: unknown,
+  oldTarget?: Map<unknown, unknown> | Set<unknown>
+) {
+  const depsMap = targetMap.get(target)
+  if (!depsMap) {
+    // never been tracked
+    return
+  }
+
+  const effects = new Set<ReactiveEffect>()
+  const add = (effectsToAdd: Set<ReactiveEffect> | undefined) => {
+    if (effectsToAdd) {
+      effectsToAdd.forEach(effect => effects.add(effect))
+    }
+  }
+
+  if (type === TriggerOpTypes.CLEAR) {
+    // collection being cleared
+    // trigger all effects for target
+    depsMap.forEach(add)
+  } else if (key === 'length' && isArray(target)) {
+    depsMap.forEach((dep, key) => {
+      if (key === 'length' || key >= (newValue as number)) {
+        add(dep)
+      }
+    })
+  } else {
+    // schedule runs for SET | ADD | DELETE
+    if (key !== void 0) {
+      add(depsMap.get(key))
+    }
+    // also run for iteration key on ADD | DELETE | Map.SET
+    const isAddOrDelete =
+      type === TriggerOpTypes.ADD ||
+      (type === TriggerOpTypes.DELETE && !isArray(target))
+    if (
+      isAddOrDelete ||
+      (type === TriggerOpTypes.SET && target instanceof Map)
+    ) {
+      add(depsMap.get(isArray(target) ? 'length' : ITERATE_KEY))
+    }
+    if (isAddOrDelete && target instanceof Map) {
+      add(depsMap.get(MAP_KEY_ITERATE_KEY))
+    }
+  }
+
+  const run = (effect: ReactiveEffect) => {
+    if (__DEV__ && effect.options.onTrigger) {
+      effect.options.onTrigger({
+        effect,
+        target,
+        key,
+        type,
+        newValue,
+        oldValue,
+        oldTarget
+      })
+    }
+    if (effect.options.scheduler) {
+      effect.options.scheduler(effect)
+    } else {
+      effect()
+    }
+  }
+
+  effects.forEach(run)
+}
+```
++ 首先获取当前对象的depsMap，如果没有副作用渲染函数则直接返回
++ 声明了一个effects的set对象，用来存储所有的副作用渲染函数
++ 下面是通过add方法把所有的副作用渲染函数都添加进effects对象
++ 最后effects循环调用了run方法，run方法中执行了effect副作用渲染函数
++ 其中如果配置项有scheduler，则执行scheduler，scheduler 的作用是根据某种调度的方式去执行某种函数，在 watch API 中，主要影响到的是回调函数的执行方式，watcher 的回调函数是通过一定的调度方式执行的
+
 ### effect副作用函数，当依赖发生变化，触发副作用函数执行
 effect副作用函数的实现原理：  
 当执行effect(fn)的时候会第一次执行到fn，看一下它的实现：
