@@ -4,9 +4,41 @@ ref调用了createRef方法，直接在createRef方法内设置了get和set函�
 reactive是使用了new Proxy，同样也是在get内track收集依赖，在set方法内触发更新trigger
 
 ### track收集依赖
-
+get中主要是触发了track收集依赖：
+```
+export function track(target: object, type: TrackOpTypes, key: unknown) {
+  if (!shouldTrack || activeEffect === undefined) {
+    return
+  }
+  let depsMap = targetMap.get(target)
+  if (!depsMap) {
+    targetMap.set(target, (depsMap = new Map()))
+  }
+  let dep = depsMap.get(key)
+  if (!dep) {
+    depsMap.set(key, (dep = new Set()))
+  }
+  if (!dep.has(activeEffect)) {
+    dep.add(activeEffect)
+    activeEffect.deps.push(dep)
+    //当一个 reactive 对象属性或一个 ref 作为依赖被追踪时，将调用 onTrack
+    // onTrack 只有在开发环境才会生效
+    if (__DEV__ && activeEffect.options.onTrack) {
+      activeEffect.options.onTrack({
+        effect: activeEffect,
+        target,
+        type,
+        key
+      })
+    }
+  }
+}
+```
++ 如果shouldTrack为false或者activeEffect是undefined，则直接返回，不尽兴依赖收集
++ 下面就从targetMap对象（响应式变量的全局map对象）中获取到当前响应式对象的depsMap（也是一个map对象），depsMap的值中存储了所有的该键值key的dep（set对象），dep中是所有该键值对应的副作用渲染函数。
++ 如果dep中没有当前激活的effect副作用渲染函数，则添加这个副作用渲染函数，且在副作用渲染函数的deps中添加这个dep。
 ### trigger触发更新
-
+在set中主要操作就是触发更新
 ### effect副作用函数，当依赖发生变化，触发副作用函数执行
 effect副作用函数的实现原理：  
 当执行effect(fn)的时候会第一次执行到fn，看一下它的实现：
