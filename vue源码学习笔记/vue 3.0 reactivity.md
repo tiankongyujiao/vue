@@ -191,6 +191,11 @@ effects.forEach(run)
 这里执行effect方法，进而又执行了副作用函数；当然里面还有一系列的判断重复的过程，比如再次访问响应式变化，依赖收集的过程又执行一遍，这时已有的effect不再重新添加。  
 响应式变量的dep是存储在一个全局变量targetMap中的，是一个map对象，值中又存储了depsMap对象。
 
+> vue2中 Object.defineProperty API 的一些缺点：不能监听对象属性新增和删除；初始化阶段递归执行 Object.defineProperty 带来的性能负担。
+
+> vue3.0采用了proxy的方式定义响应式对象，proxy劫持的是整个对象，所以我们可以检测到任何对对象的修改，弥补了 Object.defineProperty API 的不足。
+
+> Object.defineProperty 是在初始化阶段，即定义劫持对象的时候就已经递归执行了，而 Proxy 是在对象属性被访问的时候才递归执行下一步 reactive，这其实是一种延时定义子对象响应式的实现。
 
 
 
